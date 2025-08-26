@@ -15836,6 +15836,7 @@ export const implementationModule = `
 //     {
 //       id: "claude-code-implementation",
 //       title: "Claude Code \u9006\u5411\u4ECB\u7ECD",
+//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261857484.png",
 //       category: "implementation",
 //       tips: [
 //         {
@@ -15848,13 +15849,14 @@ export const implementationModule = `
 //     {
 //       id: "claude-code-output-format-example-1",
 //       title: "Claude Code \u8F93\u51FA\u683C\u5F0F\u793A\u4F8B",
-//       description: "\u5C55\u793A Claude Code \u5404\u79CD\u8F93\u51FA\u683C\u5F0F\u548C\u54CD\u5E94\u6A21\u5F0F\u7684\u5177\u4F53\u793A\u4F8B",
+//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261902348.png",
+//       description: "\u5C55\u793A Claude Code \u8F93\u51FA\u683C\u5F0F\u548C\u54CD\u5E94\u6A21\u5F0F\u7684\u5177\u4F53\u793A\u4F8B",
 //       category: "examples",
 //       tips: [
 //         {
 //           type: "tip",
 //           title: "\u683C\u5F0F\u89C4\u8303",
-//           content: "\u9075\u5FAA\u6807\u51C6\u7684\u8F93\u51FA\u683C\u5F0F\u6709\u52A9\u4E8E\u63D0\u9AD8\u4EE3\u7801\u7684\u53EF\u8BFB\u6027\u548C\u7EF4\u62A4\u6027"
+//           content: "\u5927\u8BED\u8A00\u6A21\u578B\u540D\u526F\u5176\u5B9E\uFF0C\u4E00\u5207\u90FD\u662F\u6587\u672C\u7684\u6E38\u620F"
 //         }
 //       ]
 //     },

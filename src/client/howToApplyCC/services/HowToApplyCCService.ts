@@ -7,7 +7,6 @@ import multiTurnConversations from '../content/multi-turn-conversations.md';
 import customSystemPrompts from '../content/custom-system-prompts.md';
 import outputFormatControl from '../content/output-format-control.md';
 import mcpToolsIntegration from '../content/mcp-tools-integration.md';
-import permissionSecurity from '../content/permission-security.md';
 import sreAgentExample from '../content/sre-agent-example.md';
 import securityAuditAgent from '../content/security-audit-agent.md';
 
@@ -26,7 +25,6 @@ export class HowToApplyCCService extends BaseContentService {
       'custom-system-prompts': customSystemPrompts,
       'output-format-control': outputFormatControl,
       'mcp-tools-integration': mcpToolsIntegration,
-      'permission-security': permissionSecurity,
       'sre-agent-example': sreAgentExample,
       'security-audit-agent': securityAuditAgent,
     };

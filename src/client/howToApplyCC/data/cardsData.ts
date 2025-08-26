@@ -134,24 +134,5 @@ export const howToApplyCCCards: SDKCard[] = [
         content: '为不同业务场景设计专门的 MCP 工具组合，如 SRE 工具包、开发工具包等' 
       }
     ]
-  },
-
-  {
-    id: 'permission-security',
-    title: '权限和安全控制',
-    description: '掌握Plan模式、权限管理、自定义权限提示工具等安全控制机制',
-    category: 'advanced',
-    tips: [
-      { 
-        type: 'warning', 
-        title: '生产环境', 
-        content: '生产环境应避免使用 bypassPermissions 模式，确保所有操作都经过适当审批' 
-      },
-      { 
-        type: 'success', 
-        title: '团队协作', 
-        content: 'Plan 模式特别适合代码审查和团队协作场景，可以先规划再执行' 
-      }
-    ]
   }
 ];

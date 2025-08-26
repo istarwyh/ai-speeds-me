@@ -17,6 +17,7 @@ export const howToImplementCards: ImplementCard[] = [
   {
     id: 'claude-code-implementation',
     title: 'Claude Code 逆向介绍',
+    imageUrl:"https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261857484.png",
     category: 'implementation',
     tips: [
       { 
@@ -29,13 +30,14 @@ export const howToImplementCards: ImplementCard[] = [
   {
     id: 'claude-code-output-format-example-1',
     title: 'Claude Code 输出格式示例',
-    description: '展示 Claude Code 各种输出格式和响应模式的具体示例',
+    imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261902348.png",
+    description: '展示 Claude Code 输出格式和响应模式的具体示例',
     category: 'examples',
     tips: [
       { 
         type: 'tip', 
         title: '格式规范', 
-        content: '遵循标准的输出格式有助于提高代码的可读性和维护性' 
+        content: '大语言模型名副其实，一切都是文本的游戏' 
       }
     ]
   },
