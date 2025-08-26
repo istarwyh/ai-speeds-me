@@ -3,6 +3,7 @@ import { createHead, sidebarComponent, navigationComponent, sideCardsComponent, 
 import { getStartedModule } from './modules/get-started';
 import { bestPracticesModule } from './modules/best-practices';
 import { implementationModule } from './modules/how-to-implement';
+import { howToApplyCCModule } from './modules/how-to-apply-cc';
 
 export const indexHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -18,6 +19,7 @@ ${navigationComponent}
   ${getStartedModule}
   ${bestPracticesModule}
   ${implementationModule}
+  ${howToApplyCCModule}
 </div>
 
 <script>

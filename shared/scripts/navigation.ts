@@ -34,6 +34,16 @@ function initNavigation() {
         }, 100);
       }
     }
+    
+    // Special handling for how-to-apply-cc section
+    if (sectionId === 'how-to-apply-cc') {
+      // Ensure we show the overview when navigating to how-to-apply-cc
+      if (window.showHowToApplyCCOverview) {
+        setTimeout(() => {
+          window.showHowToApplyCCOverview();
+        }, 100);
+      }
+    }
   }
   
   navTabs.forEach(tab => {

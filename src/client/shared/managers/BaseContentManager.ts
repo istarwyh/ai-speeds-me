@@ -53,6 +53,10 @@ export abstract class BaseContentManager<T extends BaseContentCard> {
     this.bindEventListeners();
   }
 
+  public showOverview(): void {
+    this.renderOverviewCards();
+  }
+
   protected renderOverviewCards(): void {
     const container = document.getElementById(this.containerId);
     if (!container) {
