@@ -51,8 +51,12 @@ export const bestPracticesCards: PracticeCard[] = [
     id: 'concurrent-claude',
     title: '多 Claude 并发干活',
     category: 'concurrency',
+    imageUrl:"https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508262218029.png",
     tags: ['concurrency', 'multi-instance', 'optimization', 'scaling'],
-    tips: [{ type: 'expert', title: '专家级技巧', content: '合理的多实例使用可以将开发效率提升 3-5 倍' }]
+    tips: [
+      { type: 'expert', title: '专家级技巧', content: '合理的多实例使用可以将开发效率提升 3-5 倍' },
+      { type: 'warning', title: '其实', content: '更好的办法是再买两台电脑：）' }
+    ]
   },
   {
     id: 'software-engineering-with-claude',

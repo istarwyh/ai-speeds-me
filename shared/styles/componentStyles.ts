@@ -1,81 +1,5 @@
 export const componentStyles = `
-/* Navigation Styles */
-.main-nav {
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-}
-
-/* Mobile: make header fixed and allow hide/show via transform */
-@media (max-width: 768px) {
-  .main-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    transform: translateY(0);
-    transition: transform 0.2s ease-in-out;
-  }
-  .main-nav.nav--hidden {
-    transform: translateY(-100%);
-  }
-  /* Offset page content under the fixed nav */
-  body.mobile-nav-space .container {
-    margin-top: var(--mobile-nav-height, 70px);
-    transition: margin-top 0.2s ease-in-out;
-  }
-  body.mobile-nav-space.nav-hidden .container {
-    margin-top: 0;
-  }
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.nav-tabs {
-  display: flex;
-  gap: 0;
-}
-
-.nav-tab {
-  background: none;
-  border: none;
-  padding: 1rem 2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-bottom: 3px solid transparent;
-  position: relative;
-}
-
-.nav-tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
-
-.nav-tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  background: var(--bg-hover);
-}
-
-.nav-icon {
-  font-size: 1.2rem;
-}
-
-.nav-text {
-  font-size: 0.95rem;
-}
+/* [moved] Navigation styles are now in shared/styles/navigationStyles.ts */
 
 /* Content Sections */
 .content-section {
@@ -2395,77 +2319,7 @@ export const componentStyles = `
   }
 }
 
-/* Slash Commands Quick Reference Styles */
-.command-groups {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.command-group {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0.75rem;
-  min-width: 220px;
-}
-
-.command-group h5 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.command-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.command-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.4rem 0.6rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  min-height: 2.2rem;
-  gap: 0.5rem;
-}
-
-.command-item:hover {
-  background: var(--bg-hover);
-  border-color: var(--color-accent);
-}
-
-.command-item code {
-  background: none;
-  color: var(--color-accent);
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0;
-  border-radius: 0;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.command-item span {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  text-align: right;
-  flex: 1;
-  margin-left: 0.75rem;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* [moved] Commands cheatsheet styles are now in shared/styles/commandsCheatsheetStyles.ts */
 
 .practice-tips {
   background: var(--bg-accent);
@@ -2527,47 +2381,7 @@ export const componentStyles = `
   font-size: 0.8rem;
 }
 
-/* Responsive Design for Command Groups */
-@media (max-width: 767px) {
-  .command-groups {
-    grid-template-columns: repeat(1, 1fr);
-    gap: 0.75rem;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .command-groups {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-}
-
-@media (min-width: 1024px) and (max-width: 1399px) {
-  .command-groups {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-  }
-}
-
-@media (min-width: 1600px) {
-  .command-groups {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 767px) {
-  .command-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-  
-  .command-item span {
-    text-align: left;
-    margin-left: 0;
-  }
-}
+/* [moved] Commands cheatsheet responsive rules are now in shared/styles/commandsCheatsheetStyles.ts */
 
 /* Best Practices Page Specific Styles */
 .practices-page__header h2 {

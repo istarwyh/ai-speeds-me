@@ -1,5 +1,5 @@
 {
-  "name": "claude-code-router",
+  "name": "aispeeds",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -8,9 +8,9 @@
     "deploy": "npm run build:client && wrangler deploy"
   },
   "keywords": [],
-  "author": "",
+  "author": "xiaohui",
   "license": "MIT",
-  "description": "Universal Claude API Proxy for Multiple AI Providers",
+  "description": "Make AI Speeds Us and Provide Universal Claude API Proxy",
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
     "esbuild": "^0.19.0",
