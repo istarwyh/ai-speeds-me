@@ -9,6 +9,29 @@ export const componentStyles = `
   backdrop-filter: blur(10px);
 }
 
+/* Mobile: make header fixed and allow hide/show via transform */
+@media (max-width: 768px) {
+  .main-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: translateY(0);
+    transition: transform 0.2s ease-in-out;
+  }
+  .main-nav.nav--hidden {
+    transform: translateY(-100%);
+  }
+  /* Offset page content under the fixed nav */
+  body.mobile-nav-space .container {
+    margin-top: var(--mobile-nav-height, 70px);
+    transition: margin-top 0.2s ease-in-out;
+  }
+  body.mobile-nav-space.nav-hidden .container {
+    margin-top: 0;
+  }
+}
+
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -107,12 +130,20 @@ export const componentStyles = `
 @media (max-width: 768px) {
   .practices-page {
     padding: 0; /* 保持全宽，不添加内边距 */
-    top: 70px; /* Smaller nav height on mobile */
+    top: var(--mobile-nav-height, 70px); /* 动态导航高度 */
   }
   
   .practices-page__header,
   .practices-page__footer {
     padding: 1rem; /* 内边距移到子元素 */
+  }
+}
+
+/* When nav is hidden on mobile, allow content to reclaim space */
+@media (max-width: 768px) {
+  body.mobile-nav-space.nav-hidden .practices-page {
+    top: 0;
+    transition: top 0.2s ease-in-out;
   }
 }
 

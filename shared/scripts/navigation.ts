@@ -156,6 +156,86 @@ function updateBreadcrumb(isArticleView, articleTitle = '') {
   }
 }
 
+// Mobile header auto-hide on scroll (only applies on small screens)
+function initMobileHeaderAutoHide() {
+  const nav = document.querySelector('.main-nav');
+  if (!nav) return;
+
+  const mq = window.matchMedia('(max-width: 768px)');
+  let lastY = window.scrollY || 0;
+  let enabled = false;
+
+  function setNavHeightVar() {
+    // Measure actual nav height to avoid magic numbers (supports stacked tabs)
+    const h = nav instanceof HTMLElement ? nav.offsetHeight : 0;
+    document.body.style.setProperty('--mobile-nav-height', h + 'px');
+  }
+
+  function showNav() {
+    nav.classList.remove('nav--hidden');
+    document.body.classList.remove('nav-hidden');
+  }
+
+  function hideNav() {
+    nav.classList.add('nav--hidden');
+    document.body.classList.add('nav-hidden');
+  }
+
+  function onScroll() {
+    if (!enabled) return;
+    const y = window.scrollY || 0;
+    const dy = y - lastY;
+    lastY = y;
+
+    // Ignore tiny jitter
+    if (Math.abs(dy) < 5) return;
+
+    // Always show near the very top
+    if (y < 10) {
+      showNav();
+      return;
+    }
+
+    // If scrolling down and sufficiently past top, hide. If scrolling up, show.
+    if (dy > 0 && y > 50) {
+      hideNav();
+    } else if (dy < 0) {
+      showNav();
+    }
+  }
+
+  function enable() {
+    if (enabled) return;
+    enabled = true;
+    document.body.classList.add('mobile-nav-space');
+    setNavHeightVar();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', setNavHeightVar);
+    window.addEventListener('orientationchange', setNavHeightVar);
+    // Re-measure after layout settles
+    setTimeout(setNavHeightVar, 100);
+  }
+
+  function disable() {
+    if (!enabled) return;
+    enabled = false;
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', setNavHeightVar);
+    window.removeEventListener('orientationchange', setNavHeightVar);
+    document.body.classList.remove('mobile-nav-space', 'nav-hidden');
+    if (nav) nav.classList.remove('nav--hidden');
+    document.body.style.removeProperty('--mobile-nav-height');
+  }
+
+  function onMQChange(e) {
+    if (e.matches) enable(); else disable();
+  }
+
+  if (mq.matches) enable();
+  if (mq.addEventListener) mq.addEventListener('change', onMQChange);
+  else if (mq.addListener) mq.addListener(onMQChange);
+}
+
 // Make functions globally available
 window.copyCommand = copyCommand;
 window.toggleFooterVisibility = toggleFooterVisibility;
@@ -163,4 +243,5 @@ window.updateBreadcrumb = updateBreadcrumb;
 
 // Initialize navigation when DOM is loaded
 document.addEventListener('DOMContentLoaded', initNavigation);
+document.addEventListener('DOMContentLoaded', initMobileHeaderAutoHide);
 `;
