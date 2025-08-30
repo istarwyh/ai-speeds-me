@@ -233,9 +233,19 @@ function initMobileHeaderAutoHide() {
     if (e.matches) enable(); else disable();
   }
 
-  if (mq.matches) enable();
-  if (mq.addEventListener) mq.addEventListener('change', onMQChange);
-  else if (mq.addListener) mq.addListener(onMQChange);
+  // Initialize properly after ensuring DOM is ready
+  function initialize() {
+    if (mq.matches) enable();
+    if (mq.addEventListener) mq.addEventListener('change', onMQChange);
+    else if (mq.addListener) mq.addListener(onMQChange);
+  }
+  
+  // Ensure initialization happens after DOM is fully ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
 }
 
 // Make functions globally available
@@ -245,5 +255,5 @@ window.updateBreadcrumb = updateBreadcrumb;
 
 // Initialize navigation when DOM is loaded
 document.addEventListener('DOMContentLoaded', initNavigation);
-document.addEventListener('DOMContentLoaded', initMobileHeaderAutoHide);
+// initMobileHeaderAutoHide now handles its own initialization
 `;
