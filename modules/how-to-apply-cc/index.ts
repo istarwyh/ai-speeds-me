@@ -8493,6 +8493,32 @@ export const howToApplyCCModule = `
 //   border-bottom-color: #3b82f6;
 // }
 // 
+// /* \u56FE\u7247\u6837\u5F0F */
+// .markdown-content img,
+// .markdown-content img.markdown-image {
+//   max-width: 100%;
+//   height: auto;
+//   display: block;
+//   margin: 16px auto;
+//   border-radius: 8px;
+//   border: 1px solid var(--border-color, #e5e7eb);
+//   background: var(--bg-secondary, #f9fafb);
+// }
+// 
+// .markdown-content img[loading="lazy"] {
+//   filter: blur(0);
+// }
+// 
+// .markdown-content .md-image-blocked {
+//   display: inline-block;
+//   padding: 6px 8px;
+//   font-size: 0.9em;
+//   color: var(--error, #dc2626);
+//   background: var(--bg-error-light, #fef2f2);
+//   border: 1px solid var(--border-error, #fecaca);
+//   border-radius: 6px;
+// }
+// 
 // /* \u5F15\u7528\u5757\u6837\u5F0F */
 // .markdown-content blockquote {
 //   border-left: 4px solid #e5e7eb;
@@ -14497,6 +14523,26 @@ export const howToApplyCCModule = `
 //         const escaped = self.escapeHtml(content);
 //         return `<pre class="code-block"><code class="hljs language-${lang}">${escaped}</code></pre>`;
 //       };
+//       const defaultImage = this.md.renderer.rules.image?.bind(this.md.renderer);
+//       this.md.renderer.rules.image = function(tokens, idx, options2, env, slf) {
+//         const token = tokens[idx];
+//         const src = token.attrGet("src") || "";
+//         const alt = token.content || token.attrGet("alt") || "";
+//         const isAllowedSrc = /^https?:\/\//.test(src) || src.startsWith("/") || src.startsWith("./") || src.startsWith("../");
+//         const isDangerousProtocol = /^(data|javascript|vbscript|file|mailto|tel):/i.test(src);
+//         if (!isAllowedSrc || isDangerousProtocol) {
+//           return `<span class="md-image-blocked">${self.escapeHtml(alt)}</span>`;
+//         }
+//         token.attrSet("loading", "lazy");
+//         token.attrSet("decoding", "async");
+//         token.attrSet("referrerpolicy", "no-referrer");
+//         token.attrSet("alt", alt);
+//         token.attrJoin("class", "markdown-image");
+//         if (defaultImage) {
+//           return defaultImage(tokens, idx, options2, env, slf);
+//         }
+//         return slf.renderToken(tokens, idx, options2);
+//       };
 //     }
 //     /**
 //      * 渲染 Markdown 为 HTML
@@ -14525,9 +14571,27 @@ export const howToApplyCCModule = `
 //           "li",
 //           "a",
 //           "blockquote",
-//           "div"
+//           "div",
+//           "img"
 //         ],
-//         ALLOWED_ATTR: ["class", "id", "href", "target", "rel"],
+//         ALLOWED_ATTR: [
+//           "class",
+//           "id",
+//           "href",
+//           "target",
+//           "rel",
+//           // img 相关
+//           "src",
+//           "alt",
+//           "title",
+//           "loading",
+//           "referrerpolicy",
+//           "decoding",
+//           "width",
+//           "height",
+//           "srcset",
+//           "sizes"
+//         ],
 //         ALLOW_DATA_ATTR: false
 //       });
 //       return sanitizedHtml;
@@ -14536,9 +14600,14 @@ export const howToApplyCCModule = `
 //      * 转义 HTML 字符以防止 XSS
 //      */
 //     escapeHtml(text) {
-//       const div = document.createElement("div");
-//       div.textContent = text;
-//       return div.innerHTML;
+//       const escapeMap = {
+//         "&": "&amp;",
+//         "<": "&lt;",
+//         ">": "&gt;",
+//         '"': "&quot;",
+//         "'": "&#39;"
+//       };
+//       return String(text).replace(/[&<>"']/g, (char) => escapeMap[char] || char);
 //     }
 //     /**
 //      * 保留已经处理的 HTML 标签，对其他内容进行转义
