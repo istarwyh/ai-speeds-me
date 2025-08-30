@@ -3,6 +3,7 @@ import { formatAnthropicToOpenAI } from './formatRequest';
 import { streamOpenAIToAnthropic } from './streamResponse';
 import { formatOpenAIToAnthropic } from './formatResponse';
 import { indexHtml } from './indexHtml';
+import { DEFAULT_SECTION_ID } from './shared/config/navigation';
 import { termsHtml } from './termsHtml';
 import { privacyHtml } from './privacyHtml';
 import { Provider, PROVIDER_CONFIGS } from './types';
@@ -51,6 +52,13 @@ export default {
     const url = new URL(request.url);
     
     if (url.pathname === '/' && request.method === 'GET') {
+      // Redirect root to a stable path with hash so browser URL reflects default section
+      const target = new URL(`/home#${DEFAULT_SECTION_ID}`, url);
+      return Response.redirect(target.toString(), 302);
+    }
+
+    // Serve SPA at /home (no redirect loop; fragments aren't sent to server)
+    if (url.pathname === '/home' && request.method === 'GET') {
       return new Response(indexHtml, {
         headers: { "Content-Type": "text/html" }
       });
@@ -94,6 +102,36 @@ export default {
         }
       } catch (error) {
         console.error('Error loading article:', error);
+        return new Response('Error loading article', { status: 500 });
+      }
+    }
+
+    // Handle markdown file requests for How to Apply CC articles
+    if (url.pathname.startsWith('/src/client/howToApplyCC/content/') && url.pathname.endsWith('.md') && request.method === 'GET') {
+      try {
+        // Extract filename from path
+        const fileName = url.pathname.split('/').pop();
+        
+        if (!fileName) {
+          return new Response('Invalid file path', { status: 400 });
+        }
+
+        // Use Assets binding to serve static files
+        const assetResponse = await env.ASSETS.fetch(new Request(`http://placeholder/howToApplyCC-content/${fileName}`));
+        
+        if (assetResponse.ok) {
+          const content = await assetResponse.text();
+          return new Response(content, {
+            headers: { 
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "public, max-age=3600" // Cache for 1 hour
+            }
+          });
+        } else {
+          return new Response('Article not found', { status: 404 });
+        }
+      } catch (error) {
+        console.error('Error loading How to Apply CC article:', error);
         return new Response('Error loading article', { status: 500 });
       }
     }

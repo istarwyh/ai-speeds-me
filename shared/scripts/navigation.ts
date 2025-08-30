@@ -1,3 +1,5 @@
+import { DEFAULT_SECTION_ID } from '../config/navigation';
+
 export const navigationScript = `
 // Navigation tab switching
 function initNavigation() {
@@ -34,6 +36,16 @@ function initNavigation() {
         }, 100);
       }
     }
+    
+    // Special handling for how-to-apply-cc section
+    if (sectionId === 'how-to-apply-cc') {
+      // Ensure we show the overview when navigating to how-to-apply-cc
+      if (window.showHowToApplyCCOverview) {
+        setTimeout(() => {
+          window.showHowToApplyCCOverview();
+        }, 100);
+      }
+    }
   }
   
   navTabs.forEach(tab => {
@@ -45,14 +57,14 @@ function initNavigation() {
     });
   });
   
-  // Handle initial hash or default to first section
+  // Handle initial hash or default to configured section
   const hash = window.location.hash.slice(1); // Remove # from hash
-  const initialSection = hash || 'get-started';
+  const initialSection = hash || '${DEFAULT_SECTION_ID}';
   showSection(initialSection);
   
   // Handle hash changes (back/forward navigation)
   window.addEventListener('hashchange', () => {
-    const newHash = window.location.hash.slice(1) || 'get-started';
+    const newHash = window.location.hash.slice(1) || '${DEFAULT_SECTION_ID}';
     showSection(newHash);
   });
 }
@@ -146,6 +158,96 @@ function updateBreadcrumb(isArticleView, articleTitle = '') {
   }
 }
 
+// Mobile header auto-hide on scroll (only applies on small screens)
+function initMobileHeaderAutoHide() {
+  const nav = document.querySelector('.main-nav');
+  if (!nav) return;
+
+  const mq = window.matchMedia('(max-width: 768px)');
+  let lastY = window.scrollY || 0;
+  let enabled = false;
+
+  function setNavHeightVar() {
+    // Measure actual nav height to avoid magic numbers (supports stacked tabs)
+    const h = nav instanceof HTMLElement ? nav.offsetHeight : 0;
+    document.body.style.setProperty('--mobile-nav-height', h + 'px');
+  }
+
+  function showNav() {
+    nav.classList.remove('nav--hidden');
+    document.body.classList.remove('nav-hidden');
+  }
+
+  function hideNav() {
+    nav.classList.add('nav--hidden');
+    document.body.classList.add('nav-hidden');
+  }
+
+  function onScroll() {
+    if (!enabled) return;
+    const y = window.scrollY || 0;
+    const dy = y - lastY;
+    lastY = y;
+
+    // Ignore tiny jitter
+    if (Math.abs(dy) < 5) return;
+
+    // Always show near the very top
+    if (y < 10) {
+      showNav();
+      return;
+    }
+
+    // If scrolling down and sufficiently past top, hide. If scrolling up, show.
+    if (dy > 0 && y > 50) {
+      hideNav();
+    } else if (dy < 0) {
+      showNav();
+    }
+  }
+
+  function enable() {
+    if (enabled) return;
+    enabled = true;
+    document.body.classList.add('mobile-nav-space');
+    setNavHeightVar();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', setNavHeightVar);
+    window.addEventListener('orientationchange', setNavHeightVar);
+    // Re-measure after layout settles
+    setTimeout(setNavHeightVar, 100);
+  }
+
+  function disable() {
+    if (!enabled) return;
+    enabled = false;
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', setNavHeightVar);
+    window.removeEventListener('orientationchange', setNavHeightVar);
+    document.body.classList.remove('mobile-nav-space', 'nav-hidden');
+    if (nav) nav.classList.remove('nav--hidden');
+    document.body.style.removeProperty('--mobile-nav-height');
+  }
+
+  function onMQChange(e) {
+    if (e.matches) enable(); else disable();
+  }
+
+  // Initialize properly after ensuring DOM is ready
+  function initialize() {
+    if (mq.matches) enable();
+    if (mq.addEventListener) mq.addEventListener('change', onMQChange);
+    else if (mq.addListener) mq.addListener(onMQChange);
+  }
+  
+  // Ensure initialization happens after DOM is fully ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
+}
+
 // Make functions globally available
 window.copyCommand = copyCommand;
 window.toggleFooterVisibility = toggleFooterVisibility;
@@ -153,4 +255,5 @@ window.updateBreadcrumb = updateBreadcrumb;
 
 // Initialize navigation when DOM is loaded
 document.addEventListener('DOMContentLoaded', initNavigation);
+// initMobileHeaderAutoHide now handles its own initialization
 `;

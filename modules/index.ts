@@ -2,6 +2,7 @@
 export { getStartedModule } from './get-started';
 export { bestPracticesModule } from './best-practices';
 export { implementationModule } from './how-to-implement';
+export { howToApplyCCModule } from './how-to-apply-cc';
 
 // 模块配置
 export const moduleConfig = {
@@ -22,6 +23,12 @@ export const moduleConfig = {
     icon: '🔧', 
     description: '深入了解 Claude Code Router 的技术架构与实现原理',
     order: 3
+  },
+  'how-to-apply-cc': {
+    title: '如何运用 CC',
+    icon: '🎯',
+    description: '掌握 Claude Code SDK，构建专业的 AI Agent 应用',
+    order: 4
   }
 };
 

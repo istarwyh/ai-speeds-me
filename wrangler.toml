@@ -1,8 +1,9 @@
-name = "claude-code-router"
+name = "aispeeds"
 main = "index.ts"
 compatibility_date = "2025-05-30"
 routes = [
-  { pattern = "cc.xiaohui.cool", custom_domain = true }
+  { pattern = "cc.xiaohui.cool", custom_domain = true },
+  { pattern = "aispeeds.me", custom_domain = true },
 ]
 
 # Build configuration for client scripts

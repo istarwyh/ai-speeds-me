@@ -22,6 +22,10 @@ export const designTokens = `
     --color-bg-tertiary: #f1f5f9;
     --color-bg-accent: #eff6ff;
     
+    /* Surface (Glass) Overlays */
+    --color-surface-glass-1: rgba(255, 255, 255, 0.06);
+    --color-surface-glass-2: rgba(255, 255, 255, 0.10);
+    
     /* Border Colors */
     --color-border-light: #e2e8f0;
     --color-border-medium: #cbd5e1;

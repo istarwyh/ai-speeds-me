@@ -44,3 +44,8 @@ export interface PracticeCard extends BaseContentCard {
 export interface ImplementCard extends BaseContentCard {
   category: 'conversation' | 'system-prompt' | 'integration' | 'configuration' | 'implementation' | 'examples';
 }
+
+// How to Apply CC SDK 的特定类型
+export interface SDKCard extends BaseContentCard {
+  category: 'quick-start' | 'core-usage' | 'advanced' | 'examples' | 'best-practices' | 'integration';
+}
