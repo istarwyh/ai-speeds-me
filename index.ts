@@ -3,6 +3,7 @@ import { formatAnthropicToOpenAI } from './formatRequest';
 import { streamOpenAIToAnthropic } from './streamResponse';
 import { formatOpenAIToAnthropic } from './formatResponse';
 import { indexHtml } from './indexHtml';
+import { DEFAULT_SECTION_ID } from './shared/config/navigation';
 import { termsHtml } from './termsHtml';
 import { privacyHtml } from './privacyHtml';
 import { Provider, PROVIDER_CONFIGS } from './types';
@@ -51,6 +52,13 @@ export default {
     const url = new URL(request.url);
     
     if (url.pathname === '/' && request.method === 'GET') {
+      // Redirect root to a stable path with hash so browser URL reflects default section
+      const target = new URL(`/home#${DEFAULT_SECTION_ID}`, url);
+      return Response.redirect(target.toString(), 302);
+    }
+
+    // Serve SPA at /home (no redirect loop; fragments aren't sent to server)
+    if (url.pathname === '/home' && request.method === 'GET') {
       return new Response(indexHtml, {
         headers: { "Content-Type": "text/html" }
       });

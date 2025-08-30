@@ -1,3 +1,5 @@
+import { DEFAULT_SECTION_ID } from '../config/navigation';
+
 export const navigationScript = `
 // Navigation tab switching
 function initNavigation() {
@@ -55,14 +57,14 @@ function initNavigation() {
     });
   });
   
-  // Handle initial hash or default to first section
+  // Handle initial hash or default to configured section
   const hash = window.location.hash.slice(1); // Remove # from hash
-  const initialSection = hash || 'get-started';
+  const initialSection = hash || '${DEFAULT_SECTION_ID}';
   showSection(initialSection);
   
   // Handle hash changes (back/forward navigation)
   window.addEventListener('hashchange', () => {
-    const newHash = window.location.hash.slice(1) || 'get-started';
+    const newHash = window.location.hash.slice(1) || '${DEFAULT_SECTION_ID}';
     showSection(newHash);
   });
 }
