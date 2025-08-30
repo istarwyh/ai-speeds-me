@@ -8525,6 +8525,32 @@ export const implementationModule = `
 //   border-bottom-color: #3b82f6;
 // }
 // 
+// /* \u56FE\u7247\u6837\u5F0F */
+// .markdown-content img,
+// .markdown-content img.markdown-image {
+//   max-width: 100%;
+//   height: auto;
+//   display: block;
+//   margin: 16px auto;
+//   border-radius: 8px;
+//   border: 1px solid #e5e7eb;
+//   background: #f9fafb;
+// }
+// 
+// .markdown-content img[loading="lazy"] {
+//   filter: blur(0);
+// }
+// 
+// .markdown-content .md-image-blocked {
+//   display: inline-block;
+//   padding: 6px 8px;
+//   font-size: 0.9em;
+//   color: #dc2626;
+//   background: #fef2f2;
+//   border: 1px solid #fecaca;
+//   border-radius: 6px;
+// }
+// 
 // /* \u5F15\u7528\u5757\u6837\u5F0F */
 // .markdown-content blockquote {
 //   border-left: 4px solid #e5e7eb;
@@ -14529,6 +14555,25 @@ export const implementationModule = `
 //         const escaped = self.escapeHtml(content);
 //         return `<pre class="code-block"><code class="hljs language-${lang}">${escaped}</code></pre>`;
 //       };
+//       const defaultImage = this.md.renderer.rules.image?.bind(this.md.renderer);
+//       this.md.renderer.rules.image = function(tokens, idx, options2, env, slf) {
+//         const token = tokens[idx];
+//         const src = token.attrGet("src") || "";
+//         const alt = token.content || token.attrGet("alt") || "";
+//         const isAllowedSrc = /^https?:\/\//.test(src) || src.startsWith("/") || src.startsWith("./") || src.startsWith("../");
+//         if (!isAllowedSrc) {
+//           return `<span class="md-image-blocked">${self.escapeHtml(alt)}</span>`;
+//         }
+//         token.attrSet("loading", "lazy");
+//         token.attrSet("decoding", "async");
+//         token.attrSet("referrerpolicy", "no-referrer");
+//         token.attrSet("alt", alt);
+//         token.attrJoin("class", "markdown-image");
+//         if (defaultImage) {
+//           return defaultImage(tokens, idx, options2, env, slf);
+//         }
+//         return slf.renderToken(tokens, idx, options2);
+//       };
 //     }
 //     /**
 //      * 渲染 Markdown 为 HTML
@@ -14557,9 +14602,27 @@ export const implementationModule = `
 //           "li",
 //           "a",
 //           "blockquote",
-//           "div"
+//           "div",
+//           "img"
 //         ],
-//         ALLOWED_ATTR: ["class", "id", "href", "target", "rel"],
+//         ALLOWED_ATTR: [
+//           "class",
+//           "id",
+//           "href",
+//           "target",
+//           "rel",
+//           // img 相关
+//           "src",
+//           "alt",
+//           "title",
+//           "loading",
+//           "referrerpolicy",
+//           "decoding",
+//           "width",
+//           "height",
+//           "srcset",
+//           "sizes"
+//         ],
 //         ALLOW_DATA_ATTR: false
 //       });
 //       return sanitizedHtml;
