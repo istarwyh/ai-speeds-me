@@ -1,10 +1,11 @@
 import type { PracticeCard } from '../types/PracticeCard';
+import { getImageUrl } from '../../shared/config/assets';
 
 export const bestPracticesCards: PracticeCard[] = [
   {
     id: 'workflow-overview',
     title: '我现在的工作流',
-    imageUrl: 'https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508232133560.png',
+    imageUrl: getImageUrl('best-practice-1'),
     category: 'workflow',
     tips: [{ type: 'success', title: '效率提升', content: '整个过程开发者只需要提出需求和Review，大大提升开发效率' }]
   },
@@ -20,7 +21,7 @@ export const bestPracticesCards: PracticeCard[] = [
   {
     id: 'mcp-commands',
     title: 'MCP 与常用命令',
-    imageUrl: 'https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202507202037009.png',
+    imageUrl: getImageUrl('best-practice-hooks'),
     category: 'mcp-commands',
     tips: [{ type: 'info', title: '扩展性', content: 'MCP 服务器让 Claude Code 具备无限扩展的可能性' }],
   },
@@ -51,7 +52,7 @@ export const bestPracticesCards: PracticeCard[] = [
     id: 'concurrent-claude',
     title: '多 Claude 并发干活',
     category: 'concurrency',
-    imageUrl:"https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508262218029.png",
+    imageUrl: getImageUrl('linus-torvalds-agent'),
     tags: ['concurrency', 'multi-instance', 'optimization', 'scaling'],
     tips: [
       { type: 'expert', title: '专家级技巧', content: '合理的多实例使用可以将开发效率提升 3-5 倍' },

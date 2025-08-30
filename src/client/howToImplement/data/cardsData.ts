@@ -1,4 +1,5 @@
 import type { ImplementCard } from '../../shared/types/ContentCard';
+import { getImageUrl } from '../../shared/config/assets';
 
 export const howToImplementCards: ImplementCard[] = [
  
@@ -17,7 +18,7 @@ export const howToImplementCards: ImplementCard[] = [
   {
     id: 'claude-code-implementation',
     title: 'Claude Code 逆向介绍',
-    imageUrl:"https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261857484.png",
+    imageUrl: getImageUrl('claude-code-implementation'),
     category: 'implementation',
     tips: [
       { 
@@ -30,7 +31,7 @@ export const howToImplementCards: ImplementCard[] = [
   {
     id: 'claude-code-output-format-example-1',
     title: 'Claude Code 输出格式示例',
-    imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261902348.png",
+    imageUrl: getImageUrl('claude-code-git-integration'),
     description: '展示 Claude Code 输出格式和响应模式的具体示例',
     category: 'examples',
     tips: [

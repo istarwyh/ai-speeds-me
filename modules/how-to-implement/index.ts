@@ -16161,6 +16161,28 @@ export const implementationModule = `
 //     }
 //   };
 // 
+//   // src/client/shared/config/assets.ts
+//   var DEFAULT_ASSET_CONFIG = {
+//     baseUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/",
+//     images: {
+//       // How to Implement images
+//       "claude-code-implementation": "202508261857484.png",
+//       "claude-code-git-integration": "202508261902348.png",
+//       // Best Practices images  
+//       "best-practice-1": "202508232133560.png",
+//       "best-practice-hooks": "202507202037009.png",
+//       "linus-torvalds-agent": "202508262218029.png"
+//     }
+//   };
+//   function getImageUrl(imageKey, config = DEFAULT_ASSET_CONFIG) {
+//     const imagePath = config.images[imageKey];
+//     if (!imagePath) {
+//       console.warn(`Image key "${imageKey}" not found in asset configuration`);
+//       return "";
+//     }
+//     return `${config.baseUrl}${imagePath}`;
+//   }
+// 
 //   // src/client/howToImplement/data/cardsData.ts
 //   var howToImplementCards = [
 //     {
@@ -16178,7 +16200,7 @@ export const implementationModule = `
 //     {
 //       id: "claude-code-implementation",
 //       title: "Claude Code \u9006\u5411\u4ECB\u7ECD",
-//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261857484.png",
+//       imageUrl: getImageUrl("claude-code-implementation"),
 //       category: "implementation",
 //       tips: [
 //         {
@@ -16191,7 +16213,7 @@ export const implementationModule = `
 //     {
 //       id: "claude-code-output-format-example-1",
 //       title: "Claude Code \u8F93\u51FA\u683C\u5F0F\u793A\u4F8B",
-//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261902348.png",
+//       imageUrl: getImageUrl("claude-code-git-integration"),
 //       description: "\u5C55\u793A Claude Code \u8F93\u51FA\u683C\u5F0F\u548C\u54CD\u5E94\u6A21\u5F0F\u7684\u5177\u4F53\u793A\u4F8B",
 //       category: "examples",
 //       tips: [

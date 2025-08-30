@@ -35,211 +35,139 @@ async function buildClientScripts() {
 }
 
 /**
- * 构建最佳实践模块
+ * 通用的模块构建函数
+ * @param {Object} config - 构建配置
+ * @param {string} config.entryPoint - 入口文件路径
+ * @param {string} config.outputFile - 输出文件路径
+ * @param {string} config.globalName - 全局变量名
+ * @param {string} config.exportName - 导出变量名
+ * @param {string} config.description - 模块描述
+ * @param {boolean} config.hasMarkdownLoader - 是否需要markdown加载器
+ * @param {boolean} config.needsPostProcessing - 是否需要后处理
  */
-async function buildBestPracticesModule() {
-  const entryPoint = path.resolve(__dirname, '../src/client/bestPractices/index.ts');
-  const outputFile = path.resolve(__dirname, '../shared/scripts/generated/bestPracticesBundle.ts');
-  
+async function buildModule(config) {
+  const {
+    entryPoint,
+    outputFile,
+    globalName,
+    exportName,
+    description,
+    hasMarkdownLoader = true,
+    needsPostProcessing = false
+  } = config;
+
   // 确保输出目录存在
   const outputDir = path.dirname(outputFile);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  console.log('📦 打包最佳实践模块...');
+  console.log(`📦 打包${description}模块...`);
   
-  // 使用 esbuild 打包
-  const result = await esbuild.build({
+  // 构建 esbuild 配置
+  const buildConfig = {
     entryPoints: [entryPoint],
     bundle: true,
     format: 'iife',
-    globalName: 'BestPracticesApp',
+    globalName,
     target: 'es2020',
     minify: process.env.NODE_ENV === 'production',
     write: false,
     platform: 'browser',
     define: {
       'process.env.NODE_ENV': '"production"'
-    },
-    loader: {
-      '.md': 'text' // 将 .md 文件作为文本加载
     }
-  });
+  };
+
+  // 添加 markdown 加载器（如果需要）
+  if (hasMarkdownLoader) {
+    buildConfig.loader = {
+      '.md': 'text' // 将 .md 文件作为文本加载
+    };
+  }
+
+  // 使用 esbuild 打包
+  const result = await esbuild.build(buildConfig);
 
   // 获取打包后的代码
   const bundledCode = result.outputFiles[0].text;
   
   // 包装成 TypeScript 导出
   // 使用 JSON.stringify 来正确转义所有特殊字符
-  const wrappedCode = `// 自动生成的客户端脚本包
+  const wrappedCode = `// 自动生成的${description}客户端脚本包
 // 构建时间: ${new Date().toISOString()}
 // 请勿手动修改此文件
 
-export const bestPracticesClientScript = ${JSON.stringify(bundledCode)};
+export const ${exportName} = ${JSON.stringify(bundledCode)};
 `;
 
   // 写入文件
   fs.writeFileSync(outputFile, wrappedCode, 'utf8');
   
-  console.log(`📝 最佳实践模块已打包到: ${outputFile}`);
+  // 后处理（如果需要）
+  if (needsPostProcessing) {
+    let fileContent = fs.readFileSync(outputFile, 'utf8');
+    // 修复 JSON 字符串中的反引号转义问题
+    fileContent = fileContent.replace(/([^\\])\\`/g, '$1\\\\`');
+    fs.writeFileSync(outputFile, fileContent, 'utf8');
+  }
+  
+  console.log(`📝 ${description}模块已打包到: ${outputFile}`);
   console.log(`📊 打包大小: ${(bundledCode.length / 1024).toFixed(2)} KB`);
+}
+
+/**
+ * 构建最佳实践模块
+ */
+async function buildBestPracticesModule() {
+  await buildModule({
+    entryPoint: path.resolve(__dirname, '../src/client/bestPractices/index.ts'),
+    outputFile: path.resolve(__dirname, '../shared/scripts/generated/bestPracticesBundle.ts'),
+    globalName: 'BestPracticesApp',
+    exportName: 'bestPracticesClientScript',
+    description: '最佳实践'
+  });
 }
 
 /**
  * 构建 How to Implement 模块
  */
 async function buildHowToImplementModule() {
-  const entryPoint = path.resolve(__dirname, '../src/client/howToImplement/index.ts');
-  const outputFile = path.resolve(__dirname, '../shared/scripts/generated/howToImplementBundle.ts');
-  
-  // 确保输出目录存在
-  const outputDir = path.dirname(outputFile);
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  console.log('📦 打包 How to Implement 模块...');
-  
-  // 使用 esbuild 打包
-  const result = await esbuild.build({
-    entryPoints: [entryPoint],
-    bundle: true,
-    format: 'iife',
+  await buildModule({
+    entryPoint: path.resolve(__dirname, '../src/client/howToImplement/index.ts'),
+    outputFile: path.resolve(__dirname, '../shared/scripts/generated/howToImplementBundle.ts'),
     globalName: 'HowToImplementApp',
-    target: 'es2020',
-    minify: process.env.NODE_ENV === 'production',
-    write: false,
-    platform: 'browser',
-    define: {
-      'process.env.NODE_ENV': '"production"'
-    },
-    loader: {
-      '.md': 'text' // 将 .md 文件作为文本加载
-    }
+    exportName: 'howToImplementClientScript',
+    description: 'How to Implement '
   });
-
-  // 获取打包后的代码
-  const bundledCode = result.outputFiles[0].text;
-  
-  // 包装成 TypeScript 导出
-  const wrappedCode = `// 自动生成的 How to Implement 客户端脚本包
-// 构建时间: ${new Date().toISOString()}
-// 请勿手动修改此文件
-
-export const howToImplementClientScript = ${JSON.stringify(bundledCode)};
-`;
-
-  // 写入文件
-  fs.writeFileSync(outputFile, wrappedCode, 'utf8');
-  
-  console.log(`📝 How to Implement 模块已打包到: ${outputFile}`);
-  console.log(`📊 打包大小: ${(bundledCode.length / 1024).toFixed(2)} KB`);
 }
 
 /**
  * 构建 How to Apply CC 模块
  */
 async function buildHowToApplyCCModule() {
-  const entryPoint = path.resolve(__dirname, '../src/client/howToApplyCC/index.ts');
-  const outputFile = path.resolve(__dirname, '../shared/scripts/generated/howToApplyCCBundle.ts');
-  
-  // 确保输出目录存在
-  const outputDir = path.dirname(outputFile);
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  console.log('📦 打包 How to Apply CC 模块...');
-  
-  // 使用 esbuild 打包
-  const result = await esbuild.build({
-    entryPoints: [entryPoint],
-    bundle: true,
-    format: 'iife',
+  await buildModule({
+    entryPoint: path.resolve(__dirname, '../src/client/howToApplyCC/index.ts'),
+    outputFile: path.resolve(__dirname, '../shared/scripts/generated/howToApplyCCBundle.ts'),
     globalName: 'HowToApplyCCApp',
-    target: 'es2020',
-    minify: process.env.NODE_ENV === 'production',
-    write: false,
-    platform: 'browser',
-    define: {
-      'process.env.NODE_ENV': '"production"'
-    },
-    loader: {
-      '.md': 'text' // 将 .md 文件作为文本加载
-    }
+    exportName: 'howToApplyCCClientScript',
+    description: 'How to Apply CC ',
+    needsPostProcessing: true // 修复反引号转义问题
   });
-
-  // 获取打包后的代码
-  const bundledCode = result.outputFiles[0].text;
-  
-  // 包装成 TypeScript 导出
-  const wrappedCode = `// 自动生成的 How to Apply CC 客户端脚本包
-// 构建时间: ${new Date().toISOString()}
-// 请勿手动修改此文件
-
-export const howToApplyCCClientScript = ${JSON.stringify(bundledCode)};
-`;
-
-  // 写入文件
-  fs.writeFileSync(outputFile, wrappedCode, 'utf8');
-  
-  // 后处理：修复反引号转义问题（howToApplyCC 模块特有的问题）
-  let fileContent = fs.readFileSync(outputFile, 'utf8');
-  // 修复 JSON 字符串中的反引号转义问题
-  fileContent = fileContent.replace(/([^\\])\\`/g, '$1\\\\`');
-  fs.writeFileSync(outputFile, fileContent, 'utf8');
-  
-  console.log(`📝 How to Apply CC 模块已打包到: ${outputFile}`);
-  console.log(`📊 打包大小: ${(bundledCode.length / 1024).toFixed(2)} KB`);
 }
 
 /**
  * 构建供应商详情模块
  */
 async function buildProviderDetailsModule() {
-  const entryPoint = path.resolve(__dirname, '../shared/scripts/providerDetails.ts');
-  const outputFile = path.resolve(__dirname, '../shared/scripts/generated/providerDetailsBundle.ts');
-  
-  // 确保输出目录存在
-  const outputDir = path.dirname(outputFile);
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  console.log('📦 打包供应商详情模块...');
-  
-  // 使用 esbuild 打包
-  const result = await esbuild.build({
-    entryPoints: [entryPoint],
-    bundle: true,
-    format: 'iife',
+  await buildModule({
+    entryPoint: path.resolve(__dirname, '../shared/scripts/providerDetails.ts'),
+    outputFile: path.resolve(__dirname, '../shared/scripts/generated/providerDetailsBundle.ts'),
     globalName: 'ProviderDetailsApp',
-    target: 'es2020',
-    minify: process.env.NODE_ENV === 'production',
-    write: false,
-    platform: 'browser',
-    define: {
-      'process.env.NODE_ENV': '"production"'
-    }
+    exportName: 'providerDetailsClientScript',
+    description: '供应商详情',
+    hasMarkdownLoader: false // 不需要 markdown 加载器
   });
-
-  // 获取打包后的代码
-  const bundledCode = result.outputFiles[0].text;
-  
-  // 包装成 TypeScript 导出
-  const wrappedCode = `// 自动生成的供应商详情客户端脚本
-// 构建时间: ${new Date().toISOString()}
-// 请勿手动修改此文件
-
-export const providerDetailsClientScript = ${JSON.stringify(bundledCode)};
-`;
-
-  // 写入文件
-  fs.writeFileSync(outputFile, wrappedCode, 'utf8');
-  
-  console.log(`📝 供应商详情模块已打包到: ${outputFile}`);
-  console.log(`📊 打包大小: ${(bundledCode.length / 1024).toFixed(2)} KB`);
 }
 
 /**

@@ -1,5 +1,13 @@
 import { HowToApplyCCManager } from './core/HowToApplyCCManager';
 
+// Type-safe global function declarations
+declare global {
+  interface Window {
+    initializeHowToApplyCC: () => void;
+    showHowToApplyCCOverview: () => void;
+  }
+}
+
 let manager: HowToApplyCCManager;
 
 export function initializeHowToApplyCC(): void {
@@ -8,9 +16,9 @@ export function initializeHowToApplyCC(): void {
   manager = new HowToApplyCCManager();
   manager.initialize();
   
-  // 暴露到全局作用域以便页面调用
-  (window as any).initializeHowToApplyCC = initializeHowToApplyCC;
-  (window as any).showHowToApplyCCOverview = () => {
+  // 暴露到全局作用域以便页面调用 - 现在使用类型安全的方式
+  window.initializeHowToApplyCC = initializeHowToApplyCC;
+  window.showHowToApplyCCOverview = () => {
     if (manager) {
       manager.showOverview();
     }
