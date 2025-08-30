@@ -7958,6 +7958,14 @@ export const implementationModule = `
 //             ${readTimeHtml}
 //           </div>
 //         </div>
+//         <button class="overview-card__share-btn" data-card-id="${card.id}" aria-label="\u5206\u4EAB\u6B64\u5361\u7247" title="\u5206\u4EAB">
+//           <svg class="icon icon-share" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+//             <path d="M7 12l10-6M7 12l10 6M7 12v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+//             <rect x="3" y="4" width="4" height="4" rx="1.5" stroke="currentColor" stroke-width="2"/>
+//             <rect x="17" y="10" width="4" height="4" rx="1.5" stroke="currentColor" stroke-width="2"/>
+//             <rect x="3" y="16" width="4" height="4" rx="1.5" stroke="currentColor" stroke-width="2"/>
+//           </svg>
+//         </button>
 //                 ${coverHtml}
 // 
 //         <div class="overview-card__content">
@@ -15475,6 +15483,398 @@ export const implementationModule = `
 //     }
 //   };
 // 
+//   // src/client/shared/services/ShareService.ts
+//   var ShareService = class {
+//     constructor(getIcon, options = {}) {
+//       __publicField(this, "width", 1080);
+//       __publicField(this, "height", 1440);
+//       __publicField(this, "padding", 72);
+//       // 72px ~ 1in logical at 96dpi
+//       __publicField(this, "getIcon");
+//       __publicField(this, "options");
+//       this.getIcon = getIcon;
+//       this.options = options;
+//     }
+//     async shareCard(card) {
+//       const canvas = await this.renderCanvas(card);
+//       const blob = await new Promise(
+//         (resolve) => canvas.toBlob((b) => resolve(b), "image/png", 0.95)
+//       );
+//       try {
+//         if (navigator.clipboard && window.ClipboardItem) {
+//           const item = new ClipboardItem({ "image/png": blob });
+//           await navigator.clipboard.write([item]);
+//           this.toast("\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F");
+//           return { method: "clipboard", ok: true };
+//         }
+//         throw new Error("Clipboard API not supported");
+//       } catch {
+//         const url = URL.createObjectURL(blob);
+//         const a = document.createElement("a");
+//         a.href = url;
+//         const safeTitle = (card.title || "share").replace(/[\n\t\s]+/g, "_").slice(0, 60);
+//         a.download = `${safeTitle}.png`;
+//         document.body.appendChild(a);
+//         a.click();
+//         a.remove();
+//         URL.revokeObjectURL(url);
+//         this.toast("\u5DF2\u4E0B\u8F7D\u56FE\u7247\uFF08\u526A\u8D34\u677F\u4E0D\u53EF\u7528\uFF09");
+//         return { method: "download", ok: true };
+//       }
+//     }
+//     // Open a preview modal to let users confirm and choose action
+//     async openPreview(card) {
+//       const canvas = await this.renderCanvas(card);
+//       const blob = await new Promise(
+//         (resolve) => canvas.toBlob((b) => resolve(b), "image/png", 0.95)
+//       );
+//       const overlay = document.createElement("div");
+//       overlay.className = "share-preview-overlay";
+//       overlay.tabIndex = -1;
+//       const modal = document.createElement("div");
+//       modal.className = "share-preview-modal";
+//       modal.setAttribute("role", "dialog");
+//       modal.setAttribute("aria-modal", "true");
+//       modal.setAttribute("aria-label", "\u5206\u4EAB\u9884\u89C8");
+//       const header = document.createElement("div");
+//       header.className = "share-preview-header";
+//       header.innerHTML = `
+//       <div class="share-preview-title">\u5206\u4EAB\u9884\u89C8</div>
+//       <button class="share-preview-close" aria-label="\u5173\u95ED\u9884\u89C8" title="\u5173\u95ED">\xD7</button>
+//     `;
+//       const body = document.createElement("div");
+//       body.className = "share-preview-body";
+//       const previewWrapper = document.createElement("div");
+//       previewWrapper.className = "share-preview-canvas-wrap";
+//       previewWrapper.appendChild(canvas);
+//       body.appendChild(previewWrapper);
+//       const actions = document.createElement("div");
+//       actions.className = "share-preview-actions";
+//       const copyBtn = document.createElement("button");
+//       copyBtn.className = "share-action primary";
+//       copyBtn.textContent = "\u590D\u5236\u5230\u526A\u8D34\u677F";
+//       const downloadBtn = document.createElement("button");
+//       downloadBtn.className = "share-action";
+//       downloadBtn.textContent = "\u4E0B\u8F7D\u56FE\u7247";
+//       const copyLinkBtn = document.createElement("button");
+//       copyLinkBtn.className = "share-action";
+//       copyLinkBtn.textContent = "\u590D\u5236\u94FE\u63A5";
+//       const cancelBtn = document.createElement("button");
+//       cancelBtn.className = "share-action subtle";
+//       cancelBtn.textContent = "\u53D6\u6D88";
+//       actions.append(copyBtn, downloadBtn, copyLinkBtn, cancelBtn);
+//       modal.append(header, body, actions);
+//       overlay.appendChild(modal);
+//       document.body.appendChild(overlay);
+//       const cleanup = () => overlay.remove();
+//       overlay.addEventListener("click", (e) => {
+//         if (e.target === overlay)
+//           cleanup();
+//       });
+//       header.querySelector(".share-preview-close")?.addEventListener("click", cleanup);
+//       const onKey = (e) => {
+//         if (e.key === "Escape") {
+//           cleanup();
+//           document.removeEventListener("keydown", onKey);
+//         }
+//       };
+//       document.addEventListener("keydown", onKey);
+//       copyBtn.addEventListener("click", async () => {
+//         const ok = await this.tryClipboard(blob);
+//         if (ok) {
+//           this.toast("\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F");
+//           cleanup();
+//         } else {
+//           this.toast("\u526A\u8D34\u677F\u4E0D\u53EF\u7528\uFF0C\u5DF2\u81EA\u52A8\u4E0B\u8F7D");
+//           this.triggerDownload(blob, card.title);
+//           cleanup();
+//         }
+//       });
+//       downloadBtn.addEventListener("click", () => {
+//         this.triggerDownload(blob, card.title);
+//         this.toast("\u5DF2\u5F00\u59CB\u4E0B\u8F7D");
+//         cleanup();
+//       });
+//       copyLinkBtn.addEventListener("click", async () => {
+//         try {
+//           const link = this.buildDeepLink(card);
+//           await navigator.clipboard.writeText(link);
+//           this.toast("\u94FE\u63A5\u5DF2\u590D\u5236");
+//         } catch {
+//           this.toast("\u590D\u5236\u94FE\u63A5\u5931\u8D25");
+//         }
+//       });
+//       cancelBtn.addEventListener("click", cleanup);
+//       header.querySelector(".share-preview-close")?.focus();
+//     }
+//     async tryClipboard(blob) {
+//       try {
+//         if (navigator.clipboard && window.ClipboardItem) {
+//           const item = new ClipboardItem({ "image/png": blob });
+//           await navigator.clipboard.write([item]);
+//           return true;
+//         }
+//       } catch {
+//       }
+//       return false;
+//     }
+//     triggerDownload(blob, title) {
+//       const url = URL.createObjectURL(blob);
+//       const a = document.createElement("a");
+//       a.href = url;
+//       const safeTitle = (title || "share").replace(/[\n\t\s]+/g, "_").slice(0, 60);
+//       a.download = `${safeTitle}.png`;
+//       document.body.appendChild(a);
+//       a.click();
+//       a.remove();
+//       URL.revokeObjectURL(url);
+//     }
+//     async renderCanvas(card) {
+//       const canvas = document.createElement("canvas");
+//       canvas.width = this.width;
+//       canvas.height = this.height;
+//       const ctx = canvas.getContext("2d");
+//       try {
+//         await document.fonts?.ready;
+//       } catch {
+//       }
+//       ctx.fillStyle = "#ffffff";
+//       ctx.fillRect(0, 0, this.width, this.height);
+//       const headerH = 160;
+//       const grad = ctx.createLinearGradient(0, 0, this.width, 0);
+//       grad.addColorStop(0, "#eff6ff");
+//       grad.addColorStop(1, "#f8fafc");
+//       ctx.fillStyle = grad;
+//       ctx.fillRect(0, 0, this.width, headerH);
+//       let y = this.padding;
+//       const icon = this.getIcon(card.category) || "\u{1F4CB}";
+//       const iconR = 44;
+//       const iconCx = this.padding + iconR;
+//       const iconCy = y + iconR;
+//       ctx.fillStyle = "#e5f2ff";
+//       this.roundRect(ctx, iconCx - iconR, iconCy - iconR, iconR * 2, iconR * 2, 24);
+//       ctx.fill();
+//       ctx.font = "48px system-ui, -apple-system, Segoe UI, Roboto";
+//       ctx.textAlign = "center";
+//       ctx.textBaseline = "middle";
+//       ctx.fillStyle = "#111827";
+//       ctx.fillText(icon, iconCx, iconCy + 2);
+//       const titleX = iconCx + iconR + 24;
+//       const titleMaxWidth = this.width - titleX - this.padding;
+//       ctx.textAlign = "left";
+//       ctx.textBaseline = "alphabetic";
+//       ctx.fillStyle = "#0f172a";
+//       ctx.font = "bold 48px ui-sans-serif, -apple-system, system-ui, Segoe UI, Roboto";
+//       y += 8;
+//       y = this.wrapText(ctx, card.title || "", titleX, y + 24, titleMaxWidth, 56, 2);
+//       ctx.font = "28px ui-sans-serif, -apple-system, system-ui";
+//       ctx.fillStyle = "#475569";
+//       const metaParts = [];
+//       if (card.difficulty)
+//         metaParts.push(this.mapDifficulty(card.difficulty));
+//       if (card.readTime)
+//         metaParts.push(`\u{1F4D6} ${card.readTime}`);
+//       if (metaParts.length) {
+//         y += 8;
+//         ctx.fillText(metaParts.join("  \xB7  "), titleX, y + 24);
+//         y += 48;
+//       } else {
+//         y += 40;
+//       }
+//       const bodyX = this.padding;
+//       const bodyMaxWidth = this.width - this.padding * 2;
+//       ctx.font = "32px ui-sans-serif, -apple-system, system-ui";
+//       ctx.fillStyle = "#111827";
+//       if (card.description) {
+//         y = this.wrapText(ctx, card.description, bodyX, y + 24, bodyMaxWidth, 44, 3);
+//       } else if (card.overview) {
+//         y = this.wrapText(ctx, card.overview, bodyX, y + 24, bodyMaxWidth, 44, 3);
+//       }
+//       const tips = (card.tips || []).slice(0, 2);
+//       if (tips.length) {
+//         y += 24;
+//         tips.forEach((tip) => {
+//           y = this.renderTip(ctx, tip.title + "\uFF1A" + tip.content, bodyX, y, bodyMaxWidth);
+//           y += 16;
+//         });
+//       }
+//       const tags = (card.tags || []).slice(0, 3);
+//       if (tags.length) {
+//         y += 16;
+//         this.renderTags(ctx, tags, bodyX, y);
+//         y += 56;
+//       }
+//       const qrSize = 220;
+//       const qrX = this.width - this.padding - qrSize;
+//       const qrY = this.height - this.padding - qrSize;
+//       await this.drawQrOrPlaceholder(ctx, card, qrX, qrY, qrSize);
+//       ctx.save();
+//       ctx.globalAlpha = 0.85;
+//       ctx.textAlign = "left";
+//       ctx.textBaseline = "alphabetic";
+//       ctx.font = "bold 28px ui-sans-serif, -apple-system, system-ui";
+//       ctx.fillStyle = "#0f172a";
+//       ctx.fillText("aispeeds.me", this.padding, this.height - this.padding / 2);
+//       ctx.restore();
+//       return canvas;
+//     }
+//     buildDeepLink(card) {
+//       try {
+//         if (this.options.deepLinkBuilder)
+//           return this.options.deepLinkBuilder(card);
+//         const url = new URL(window.location.href);
+//         const moduleName = this.options.moduleName || "best-practices";
+//         url.searchParams.set("module", moduleName);
+//         url.searchParams.set("view", "article");
+//         url.searchParams.set("cardId", card.id || "");
+//         return url.toString();
+//       } catch {
+//         return window.location.href;
+//       }
+//     }
+//     async drawQrOrPlaceholder(ctx, card, x, y, size) {
+//       ctx.strokeStyle = "#cbd5e1";
+//       ctx.lineWidth = 3;
+//       this.roundRect(ctx, x, y, size, size, 16);
+//       ctx.stroke();
+//       const deepLink = this.buildDeepLink(card);
+//       const img = await this.loadQrImage(deepLink, size).catch(() => null);
+//       if (!img) {
+//         ctx.font = "24px ui-sans-serif, -apple-system, system-ui";
+//         ctx.fillStyle = "#64748b";
+//         ctx.textAlign = "center";
+//         ctx.textBaseline = "middle";
+//         ctx.fillText("QR \u9884\u7559", x + size / 2, y + size / 2);
+//         return;
+//       }
+//       const pad = 10;
+//       ctx.fillStyle = "#ffffff";
+//       this.roundRect(ctx, x + 2, y + 2, size - 4, size - 4, 12);
+//       ctx.fill();
+//       ctx.drawImage(img, x + pad, y + pad, size - pad * 2, size - pad * 2);
+//     }
+//     async loadQrImage(data, size) {
+//       const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(
+//         data
+//       )}`;
+//       await new Promise((resolve) => setTimeout(resolve, 0));
+//       return new Promise((resolve, reject) => {
+//         const img = new Image();
+//         img.crossOrigin = "anonymous";
+//         img.onload = () => resolve(img);
+//         img.onerror = () => reject(new Error("QR load failed"));
+//         img.src = url;
+//       });
+//     }
+//     renderTip(ctx, text, x, y, maxWidth) {
+//       const lineH = 40;
+//       const padding = 16;
+//       const lines = this.splitLines(ctx, text, maxWidth - padding * 2);
+//       const boxH = lines.length * lineH + padding * 2;
+//       ctx.fillStyle = "rgba(6, 182, 212, 0.08)";
+//       this.roundRect(ctx, x, y, maxWidth, boxH, 12);
+//       ctx.fill();
+//       ctx.fillStyle = "#06b6d4";
+//       ctx.fillRect(x, y, 6, boxH);
+//       ctx.fillStyle = "#0f172a";
+//       ctx.font = "28px ui-sans-serif, -apple-system, system-ui";
+//       let ty = y + padding + 28;
+//       lines.forEach((line) => {
+//         ctx.fillText(line, x + padding + 10, ty);
+//         ty += lineH;
+//       });
+//       return y + boxH;
+//     }
+//     renderTags(ctx, tags, x, y) {
+//       ctx.font = "26px ui-sans-serif, -apple-system, system-ui";
+//       let cx = x;
+//       const py = y;
+//       tags.forEach((tag) => {
+//         const paddingX = 18;
+//         const paddingY = 10;
+//         const w = ctx.measureText(tag).width + paddingX * 2;
+//         const h = 40;
+//         ctx.fillStyle = "#f1f5f9";
+//         this.roundRect(ctx, cx, py - h + paddingY, w, h, 20);
+//         ctx.fill();
+//         ctx.fillStyle = "#475569";
+//         ctx.fillText(tag, cx + paddingX, py - 12);
+//         cx += w + 12;
+//       });
+//     }
+//     mapDifficulty(d) {
+//       switch (d) {
+//         case "beginner":
+//           return "\u5165\u95E8";
+//         case "intermediate":
+//           return "\u8FDB\u9636";
+//         case "expert":
+//           return "\u4E13\u5BB6";
+//         default:
+//           return d;
+//       }
+//     }
+//     wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+//       const lines = this.splitLines(ctx, text, maxWidth, maxLines);
+//       lines.forEach((line, i) => {
+//         ctx.fillText(line, x, y + i * lineHeight);
+//       });
+//       return y + Math.min(lines.length, maxLines) * lineHeight;
+//     }
+//     splitLines(ctx, text, maxWidth, maxLines) {
+//       const words = text.split(/\s+/);
+//       const lines = [];
+//       let current = "";
+//       for (let i = 0; i < words.length; i++) {
+//         const test = current ? `${current} ${words[i]}` : words[i];
+//         if (ctx.measureText(test).width <= maxWidth) {
+//           current = test;
+//         } else {
+//           if (current)
+//             lines.push(current);
+//           current = words[i];
+//           if (maxLines && lines.length >= maxLines - 1) {
+//             while (ctx.measureText(current + "\u2026").width > maxWidth && current.length > 0) {
+//               current = current.slice(0, -1);
+//             }
+//             current = current + "\u2026";
+//             break;
+//           }
+//         }
+//       }
+//       if (current)
+//         lines.push(current);
+//       return lines;
+//     }
+//     roundRect(ctx, x, y, w, h, r) {
+//       const radius = Math.min(r, w / 2, h / 2);
+//       ctx.beginPath();
+//       ctx.moveTo(x + radius, y);
+//       ctx.arcTo(x + w, y, x + w, y + h, radius);
+//       ctx.arcTo(x + w, y + h, x, y + h, radius);
+//       ctx.arcTo(x, y + h, x, y, radius);
+//       ctx.arcTo(x, y, x + w, y, radius);
+//       ctx.closePath();
+//     }
+//     toast(message) {
+//       const el = document.createElement("div");
+//       el.textContent = message;
+//       el.style.position = "fixed";
+//       el.style.left = "50%";
+//       el.style.top = "16px";
+//       el.style.transform = "translateX(-50%)";
+//       el.style.background = "rgba(17, 24, 39, 0.9)";
+//       el.style.color = "#fff";
+//       el.style.padding = "8px 12px";
+//       el.style.borderRadius = "8px";
+//       el.style.fontSize = "14px";
+//       el.style.zIndex = "9999";
+//       el.style.pointerEvents = "none";
+//       document.body.appendChild(el);
+//       setTimeout(() => el.remove(), 1800);
+//     }
+//   };
+// 
 //   // src/client/shared/handlers/BaseArticleEventHandler.ts
 //   var EXIT_ANIMATION_DURATION = 230;
 //   var BaseArticleEventHandler = class {
@@ -15484,6 +15884,8 @@ export const implementationModule = `
 //       __publicField(this, "contentService");
 //       __publicField(this, "articleRenderer");
 //       __publicField(this, "onBackToOverview");
+//       __publicField(this, "_shareService");
+//       __publicField(this, "_suppressHistory", false);
 //       this.containerId = containerId;
 //       this.boundClickHandler = this.handleCardClick.bind(this);
 //       this.contentService = contentService;
@@ -15518,10 +15920,39 @@ export const implementationModule = `
 //       if (isInArticleView) {
 //         return;
 //       }
+//       const shareBtn = target.closest(".overview-card__share-btn");
+//       if (shareBtn) {
+//         event.stopPropagation();
+//         event.preventDefault();
+//         const cardId2 = shareBtn.getAttribute("data-card-id");
+//         if (!cardId2)
+//           return;
+//         const card = this.resolveCardById(cardId2);
+//         if (!card)
+//           return;
+//         this._shareService = this._shareService || new ShareService(this.getIcon.bind(this), {
+//           moduleName: this.getModuleName()
+//         });
+//         void this._shareService.openPreview(card);
+//         return;
+//       }
 //       const cardId = this.extractCardId(target);
 //       if (!cardId)
 //         return;
 //       this.showDetailedContent(cardId);
+//     }
+//     // 提供可公开调用的方法用于根据 cardId 打开文章（用于深链接入口）
+//     openArticle(cardId) {
+//       return this.showDetailedContent(cardId);
+//     }
+//     // 从浏览器历史导航进入时打开文章，不再 pushState，避免破坏历史栈
+//     async openArticleFromHistory(cardId) {
+//       this._suppressHistory = true;
+//       try {
+//         await this.showDetailedContent(cardId);
+//       } finally {
+//         this._suppressHistory = false;
+//       }
 //     }
 //     // Default: click on whole card, fallback to action button
 //     extractCardId(target) {
@@ -15574,6 +16005,9 @@ export const implementationModule = `
 //           this.addEnhancedFeatures(markdownContainer);
 //         }
 //         this.configureBackNavigation();
+//         if (!this._suppressHistory) {
+//           this.updateHistoryForArticle(cardId);
+//         }
 //       } catch (error) {
 //         console.error("\u52A0\u8F7D\u6587\u7AE0\u5931\u8D25:", error);
 //         const message = error instanceof Error ? error.message : String(error);
@@ -15614,12 +16048,14 @@ export const implementationModule = `
 //           articleEl.classList.add("is-exiting");
 //           setTimeout(() => {
 //             this.onBackToOverview();
+//             this.updateHistoryForOverview();
 //             window.scrollTo({ top: 0, behavior: "smooth" });
 //           }, EXIT_ANIMATION_DURATION);
 //           return;
 //         }
 //       }
 //       this.onBackToOverview();
+//       this.updateHistoryForOverview();
 //     }
 //     // Shared enhancements below
 //     addEnhancedFeatures(container) {
@@ -15694,7 +16130,114 @@ export const implementationModule = `
 //       window.addEventListener("scroll", toggleBackToTop);
 //       toggleBackToTop();
 //     }
+//     // —— URL 深链接辅助方法 ——
+//     updateHistoryForArticle(cardId) {
+//       try {
+//         const url = new URL(window.location.href);
+//         url.searchParams.set("module", this.getModuleName());
+//         url.searchParams.set("view", "article");
+//         url.searchParams.set("cardId", cardId);
+//         window.history.pushState(
+//           { module: this.getModuleName(), view: "article", cardId },
+//           "",
+//           url.toString()
+//         );
+//       } catch {
+//       }
+//     }
+//     updateHistoryForOverview() {
+//       try {
+//         const url = new URL(window.location.href);
+//         url.searchParams.set("module", this.getModuleName());
+//         url.searchParams.set("view", "overview");
+//         url.searchParams.delete("cardId");
+//         window.history.pushState(
+//           { module: this.getModuleName(), view: "overview" },
+//           "",
+//           url.toString()
+//         );
+//       } catch {
+//       }
+//     }
 //   };
+// 
+//   // src/client/howToImplement/data/cardsData.ts
+//   var howToImplementCards = [
+//     {
+//       id: "claude-code-system-prompt-cn",
+//       title: "Claude Code \u7CFB\u7EDF\u63D0\u793A\u8BCD(\u4E2D\u6587)",
+//       category: "system-prompt",
+//       tips: [
+//         {
+//           type: "warning",
+//           title: "\u6CE8\u610F\u4E8B\u9879",
+//           content: "\u7CFB\u7EDF\u63D0\u793A\u8BCD\u5305\u542B\u4E86 Claude Code \u7684\u6838\u5FC3\u903B\u8F91\uFF0C\u7406\u89E3\u540E\u53EF\u4EE5\u66F4\u7CBE\u51C6\u5730\u63D0\u51FA\u9700\u6C42"
+//         }
+//       ]
+//     },
+//     {
+//       id: "claude-code-implementation",
+//       title: "Claude Code \u9006\u5411\u4ECB\u7ECD",
+//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261857484.png",
+//       category: "implementation",
+//       tips: [
+//         {
+//           type: "success",
+//           title: "\u9605\u8BFB\u5EFA\u8BAE",
+//           content: "\u4E0D\u662F\u771F\u7684\u8981\u5B9E\u73B0\uFF0C\u4F46\u786E\u5B9E\u597D\u5947\u51ED\u4EC0\u4E48CC\u8868\u73B0\u66F4\u597D"
+//         }
+//       ]
+//     },
+//     {
+//       id: "claude-code-output-format-example-1",
+//       title: "Claude Code \u8F93\u51FA\u683C\u5F0F\u793A\u4F8B",
+//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261902348.png",
+//       description: "\u5C55\u793A Claude Code \u8F93\u51FA\u683C\u5F0F\u548C\u54CD\u5E94\u6A21\u5F0F\u7684\u5177\u4F53\u793A\u4F8B",
+//       category: "examples",
+//       tips: [
+//         {
+//           type: "tip",
+//           title: "\u683C\u5F0F\u89C4\u8303",
+//           content: "\u5927\u8BED\u8A00\u6A21\u578B\u540D\u526F\u5176\u5B9E\uFF0C\u4E00\u5207\u90FD\u662F\u6587\u672C\u7684\u6E38\u620F"
+//         }
+//       ]
+//     },
+//     {
+//       id: "claude-code-system-prompt-en",
+//       title: "Claude Code System Prompt (English)",
+//       category: "system-prompt",
+//       overview: "Comprehensive English system prompt documentation with all tool definitions, usage rules, and behavioral constraints.",
+//       tips: [
+//         {
+//           type: "info",
+//           title: "Advanced Usage",
+//           content: "Understanding the system prompt deeply helps you customize and optimize AI assistant behavior"
+//         }
+//       ]
+//     },
+//     {
+//       id: "claude-code-conversation-example-1",
+//       title: "Claude Code \u5BF9\u8BDD\u793A\u4F8B",
+//       description: "\u771F\u5B9E\u7684 Claude Code \u4F7F\u7528\u5BF9\u8BDD\u8BB0\u5F55\uFF0C\u5C55\u793A\u5B8C\u6574\u7684\u5F00\u53D1\u6D41\u7A0B\u548C\u4EA4\u4E92\u6A21\u5F0F",
+//       category: "conversation",
+//       difficulty: "beginner",
+//       readTime: "15 \u5206\u949F",
+//       tags: ["\u5BF9\u8BDD\u793A\u4F8B", "\u5B9E\u9645\u6848\u4F8B", "\u5DE5\u4F5C\u6D41\u7A0B", "Python\u5F00\u53D1"],
+//       overview: "\u901A\u8FC7\u771F\u5B9E\u5BF9\u8BDD\u8BB0\u5F55\u4E86\u89E3 Claude Code \u7684\u5DE5\u4F5C\u65B9\u5F0F\uFF0C\u5B66\u4E60\u5982\u4F55\u4E0E AI \u534F\u4F5C\u5F00\u53D1\u4FC4\u7F57\u65AF\u65B9\u5757\u6E38\u620F\u3002",
+//       sections: [
+//         { title: "\u5BF9\u8BDD\u6D41\u7A0B\u5206\u6790", content: "\u4ECE\u9700\u6C42\u63D0\u51FA\u5230\u4EE3\u7801\u5B8C\u6210\u7684\u5B8C\u6574\u4EA4\u4E92\u8FC7\u7A0B", type: "text" },
+//         { title: "\u5DE5\u5177\u4F7F\u7528\u793A\u4F8B", content: "TodoWrite\u3001LS\u3001Write\u3001Edit \u7B49\u5DE5\u5177\u7684\u5B9E\u9645\u5E94\u7528", type: "code" },
+//         { title: "\u4EFB\u52A1\u5206\u89E3\u7B56\u7565", content: "\u5982\u4F55\u5C06\u590D\u6742\u4EFB\u52A1\u62C6\u5206\u4E3A\u53EF\u7BA1\u7406\u7684\u6B65\u9AA4", type: "list" }
+//       ],
+//       tips: [
+//         {
+//           type: "success",
+//           title: "\u5B66\u4E60\u8981\u70B9",
+//           content: "\u6CE8\u610F\u89C2\u5BDF Claude Code \u5982\u4F55\u4F7F\u7528 TodoWrite \u5DE5\u5177\u6765\u89C4\u5212\u548C\u8DDF\u8E2A\u4EFB\u52A1\u8FDB\u5EA6"
+//         }
+//       ]
+//     }
+//   ];
 // 
 //   // src/client/howToImplement/handlers/EventHandler.ts
 //   var HowToImplementEventHandler = class extends BaseArticleEventHandler {
@@ -15705,6 +16248,12 @@ export const implementationModule = `
 //         articleRenderer,
 //         () => window.initializeHowToImplement()
 //       );
+//     }
+//     resolveCardById(id) {
+//       return howToImplementCards.find((c) => c.id === id) || null;
+//     }
+//     getIcon(category) {
+//       return categoryIcons[category] || "\u{1F4CB}";
 //     }
 //   };
 // 
@@ -15818,84 +16367,6 @@ export const implementationModule = `
 //       return this.renderer.render(markdown2);
 //     }
 //   };
-// 
-//   // src/client/howToImplement/data/cardsData.ts
-//   var howToImplementCards = [
-//     {
-//       id: "claude-code-system-prompt-cn",
-//       title: "Claude Code \u7CFB\u7EDF\u63D0\u793A\u8BCD(\u4E2D\u6587)",
-//       category: "system-prompt",
-//       tips: [
-//         {
-//           type: "warning",
-//           title: "\u6CE8\u610F\u4E8B\u9879",
-//           content: "\u7CFB\u7EDF\u63D0\u793A\u8BCD\u5305\u542B\u4E86 Claude Code \u7684\u6838\u5FC3\u903B\u8F91\uFF0C\u7406\u89E3\u540E\u53EF\u4EE5\u66F4\u7CBE\u51C6\u5730\u63D0\u51FA\u9700\u6C42"
-//         }
-//       ]
-//     },
-//     {
-//       id: "claude-code-implementation",
-//       title: "Claude Code \u9006\u5411\u4ECB\u7ECD",
-//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261857484.png",
-//       category: "implementation",
-//       tips: [
-//         {
-//           type: "success",
-//           title: "\u9605\u8BFB\u5EFA\u8BAE",
-//           content: "\u4E0D\u662F\u771F\u7684\u8981\u5B9E\u73B0\uFF0C\u4F46\u786E\u5B9E\u597D\u5947\u51ED\u4EC0\u4E48CC\u8868\u73B0\u66F4\u597D"
-//         }
-//       ]
-//     },
-//     {
-//       id: "claude-code-output-format-example-1",
-//       title: "Claude Code \u8F93\u51FA\u683C\u5F0F\u793A\u4F8B",
-//       imageUrl: "https://xiaohui-zhangjiakou.oss-cn-zhangjiakou.aliyuncs.com/image/202508261902348.png",
-//       description: "\u5C55\u793A Claude Code \u8F93\u51FA\u683C\u5F0F\u548C\u54CD\u5E94\u6A21\u5F0F\u7684\u5177\u4F53\u793A\u4F8B",
-//       category: "examples",
-//       tips: [
-//         {
-//           type: "tip",
-//           title: "\u683C\u5F0F\u89C4\u8303",
-//           content: "\u5927\u8BED\u8A00\u6A21\u578B\u540D\u526F\u5176\u5B9E\uFF0C\u4E00\u5207\u90FD\u662F\u6587\u672C\u7684\u6E38\u620F"
-//         }
-//       ]
-//     },
-//     {
-//       id: "claude-code-system-prompt-en",
-//       title: "Claude Code System Prompt (English)",
-//       category: "system-prompt",
-//       overview: "Comprehensive English system prompt documentation with all tool definitions, usage rules, and behavioral constraints.",
-//       tips: [
-//         {
-//           type: "info",
-//           title: "Advanced Usage",
-//           content: "Understanding the system prompt deeply helps you customize and optimize AI assistant behavior"
-//         }
-//       ]
-//     },
-//     {
-//       id: "claude-code-conversation-example-1",
-//       title: "Claude Code \u5BF9\u8BDD\u793A\u4F8B",
-//       description: "\u771F\u5B9E\u7684 Claude Code \u4F7F\u7528\u5BF9\u8BDD\u8BB0\u5F55\uFF0C\u5C55\u793A\u5B8C\u6574\u7684\u5F00\u53D1\u6D41\u7A0B\u548C\u4EA4\u4E92\u6A21\u5F0F",
-//       category: "conversation",
-//       difficulty: "beginner",
-//       readTime: "15 \u5206\u949F",
-//       tags: ["\u5BF9\u8BDD\u793A\u4F8B", "\u5B9E\u9645\u6848\u4F8B", "\u5DE5\u4F5C\u6D41\u7A0B", "Python\u5F00\u53D1"],
-//       overview: "\u901A\u8FC7\u771F\u5B9E\u5BF9\u8BDD\u8BB0\u5F55\u4E86\u89E3 Claude Code \u7684\u5DE5\u4F5C\u65B9\u5F0F\uFF0C\u5B66\u4E60\u5982\u4F55\u4E0E AI \u534F\u4F5C\u5F00\u53D1\u4FC4\u7F57\u65AF\u65B9\u5757\u6E38\u620F\u3002",
-//       sections: [
-//         { title: "\u5BF9\u8BDD\u6D41\u7A0B\u5206\u6790", content: "\u4ECE\u9700\u6C42\u63D0\u51FA\u5230\u4EE3\u7801\u5B8C\u6210\u7684\u5B8C\u6574\u4EA4\u4E92\u8FC7\u7A0B", type: "text" },
-//         { title: "\u5DE5\u5177\u4F7F\u7528\u793A\u4F8B", content: "TodoWrite\u3001LS\u3001Write\u3001Edit \u7B49\u5DE5\u5177\u7684\u5B9E\u9645\u5E94\u7528", type: "code" },
-//         { title: "\u4EFB\u52A1\u5206\u89E3\u7B56\u7565", content: "\u5982\u4F55\u5C06\u590D\u6742\u4EFB\u52A1\u62C6\u5206\u4E3A\u53EF\u7BA1\u7406\u7684\u6B65\u9AA4", type: "list" }
-//       ],
-//       tips: [
-//         {
-//           type: "success",
-//           title: "\u5B66\u4E60\u8981\u70B9",
-//           content: "\u6CE8\u610F\u89C2\u5BDF Claude Code \u5982\u4F55\u4F7F\u7528 TodoWrite \u5DE5\u5177\u6765\u89C4\u5212\u548C\u8DDF\u8E2A\u4EFB\u52A1\u8FDB\u5EA6"
-//         }
-//       ]
-//     }
-//   ];
 // 
 //   // src/client/howToImplement/core/HowToImplementManager.ts
 //   var HowToImplementManager = class extends BaseContentManager {

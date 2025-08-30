@@ -1,5 +1,7 @@
 import { injectMarkdownStyles } from '../../bestPractices/styles/markdownStyles';
 import { SafeMarkdownRenderer } from '../../../../shared/utils/markdownRenderer';
+import type { BaseContentCard } from '../types/ContentCard';
+import { ShareService as GenericShareService } from '../services/ShareService';
 
 // Animation duration constant
 const EXIT_ANIMATION_DURATION = 230; // 匹配 CSS 中的动画时长
@@ -35,6 +37,8 @@ export abstract class BaseArticleEventHandler {
   protected contentService: IContentService;
   protected articleRenderer: IArticleRenderer;
   protected onBackToOverview?: () => void;
+  private _shareService?: GenericShareService<BaseContentCard>;
+  private _suppressHistory = false;
 
   constructor(
     containerId: string,
@@ -48,6 +52,12 @@ export abstract class BaseArticleEventHandler {
     this.articleRenderer = articleRenderer;
     this.onBackToOverview = onBackToOverview;
   }
+
+  // Subclasses must provide a single source of truth for card lookup and icon mapping
+  protected abstract resolveCardById(id: string): BaseContentCard | null;
+  protected abstract getIcon(category: string): string;
+  // 用于深链接的模块标识（避免缩写，保持可解释性）
+  protected abstract getModuleName(): string;
 
   public bindEventListeners(): void {
     const container = document.getElementById(this.containerId);
@@ -84,10 +94,44 @@ export abstract class BaseArticleEventHandler {
       return;
     }
 
+    // Intercept share button clicks (DRY across modules)
+    const shareBtn = target.closest('.overview-card__share-btn') as HTMLElement | null;
+    if (shareBtn) {
+      event.stopPropagation();
+      event.preventDefault();
+      const cardId = shareBtn.getAttribute('data-card-id');
+      if (!cardId) return;
+      const card = this.resolveCardById(cardId);
+      if (!card) return;
+      // lazy init
+      this._shareService =
+        this._shareService ||
+        new GenericShareService<BaseContentCard>(this.getIcon.bind(this), {
+          moduleName: this.getModuleName(),
+        });
+      void this._shareService.openPreview(card);
+      return;
+    }
+
     const cardId = this.extractCardId(target);
     if (!cardId) return;
 
     this.showDetailedContent(cardId);
+  }
+
+  // 提供可公开调用的方法用于根据 cardId 打开文章（用于深链接入口）
+  public openArticle(cardId: string): Promise<void> {
+    return this.showDetailedContent(cardId);
+  }
+
+  // 从浏览器历史导航进入时打开文章，不再 pushState，避免破坏历史栈
+  public async openArticleFromHistory(cardId: string): Promise<void> {
+    this._suppressHistory = true;
+    try {
+      await this.showDetailedContent(cardId);
+    } finally {
+      this._suppressHistory = false;
+    }
   }
 
   // Default: click on whole card, fallback to action button
@@ -159,6 +203,11 @@ export abstract class BaseArticleEventHandler {
 
       // Back navigation wiring
       this.configureBackNavigation();
+
+      // 深链接：打开文章后更新 URL 查询参数
+      if (!this._suppressHistory) {
+        this.updateHistoryForArticle(cardId);
+      }
     } catch (error) {
       console.error('加载文章失败:', error);
       const message = error instanceof Error ? error.message : String(error);
@@ -209,12 +258,15 @@ export abstract class BaseArticleEventHandler {
         articleEl.classList.add('is-exiting');
         setTimeout(() => {
           this.onBackToOverview!();
+          // 返回总览后更新 URL 查询参数
+          this.updateHistoryForOverview();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }, EXIT_ANIMATION_DURATION);
         return;
       }
     }
     this.onBackToOverview();
+    this.updateHistoryForOverview();
   }
 
   // Shared enhancements below
@@ -301,5 +353,34 @@ export abstract class BaseArticleEventHandler {
 
     window.addEventListener('scroll', toggleBackToTop);
     toggleBackToTop();
+  }
+
+  // —— URL 深链接辅助方法 ——
+  private updateHistoryForArticle(cardId: string): void {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('module', this.getModuleName());
+      url.searchParams.set('view', 'article');
+      url.searchParams.set('cardId', cardId);
+      window.history.pushState(
+        { module: this.getModuleName(), view: 'article', cardId },
+        '',
+        url.toString()
+      );
+    } catch {}
+  }
+
+  private updateHistoryForOverview(): void {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('module', this.getModuleName());
+      url.searchParams.set('view', 'overview');
+      url.searchParams.delete('cardId');
+      window.history.pushState(
+        { module: this.getModuleName(), view: 'overview' },
+        '',
+        url.toString()
+      );
+    } catch {}
   }
 }

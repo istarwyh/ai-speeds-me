@@ -7924,6 +7924,14 @@ export const howToApplyCCModule = `
 //             ${readTimeHtml}
 //           </div>
 //         </div>
+//         <button class="overview-card__share-btn" data-card-id="${card.id}" aria-label="\u5206\u4EAB\u6B64\u5361\u7247" title="\u5206\u4EAB">
+//           <svg class="icon icon-share" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+//             <path d="M7 12l10-6M7 12l10 6M7 12v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+//             <rect x="3" y="4" width="4" height="4" rx="1.5" stroke="currentColor" stroke-width="2"/>
+//             <rect x="17" y="10" width="4" height="4" rx="1.5" stroke="currentColor" stroke-width="2"/>
+//             <rect x="3" y="16" width="4" height="4" rx="1.5" stroke="currentColor" stroke-width="2"/>
+//           </svg>
+//         </button>
 //                 ${coverHtml}
 // 
 //         <div class="overview-card__content">
@@ -15443,6 +15451,398 @@ export const howToApplyCCModule = `
 //     }
 //   };
 // 
+//   // src/client/shared/services/ShareService.ts
+//   var ShareService = class {
+//     constructor(getIcon, options = {}) {
+//       __publicField(this, "width", 1080);
+//       __publicField(this, "height", 1440);
+//       __publicField(this, "padding", 72);
+//       // 72px ~ 1in logical at 96dpi
+//       __publicField(this, "getIcon");
+//       __publicField(this, "options");
+//       this.getIcon = getIcon;
+//       this.options = options;
+//     }
+//     async shareCard(card) {
+//       const canvas = await this.renderCanvas(card);
+//       const blob = await new Promise(
+//         (resolve) => canvas.toBlob((b) => resolve(b), "image/png", 0.95)
+//       );
+//       try {
+//         if (navigator.clipboard && window.ClipboardItem) {
+//           const item = new ClipboardItem({ "image/png": blob });
+//           await navigator.clipboard.write([item]);
+//           this.toast("\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F");
+//           return { method: "clipboard", ok: true };
+//         }
+//         throw new Error("Clipboard API not supported");
+//       } catch {
+//         const url = URL.createObjectURL(blob);
+//         const a = document.createElement("a");
+//         a.href = url;
+//         const safeTitle = (card.title || "share").replace(/[\n\t\s]+/g, "_").slice(0, 60);
+//         a.download = `${safeTitle}.png`;
+//         document.body.appendChild(a);
+//         a.click();
+//         a.remove();
+//         URL.revokeObjectURL(url);
+//         this.toast("\u5DF2\u4E0B\u8F7D\u56FE\u7247\uFF08\u526A\u8D34\u677F\u4E0D\u53EF\u7528\uFF09");
+//         return { method: "download", ok: true };
+//       }
+//     }
+//     // Open a preview modal to let users confirm and choose action
+//     async openPreview(card) {
+//       const canvas = await this.renderCanvas(card);
+//       const blob = await new Promise(
+//         (resolve) => canvas.toBlob((b) => resolve(b), "image/png", 0.95)
+//       );
+//       const overlay = document.createElement("div");
+//       overlay.className = "share-preview-overlay";
+//       overlay.tabIndex = -1;
+//       const modal = document.createElement("div");
+//       modal.className = "share-preview-modal";
+//       modal.setAttribute("role", "dialog");
+//       modal.setAttribute("aria-modal", "true");
+//       modal.setAttribute("aria-label", "\u5206\u4EAB\u9884\u89C8");
+//       const header = document.createElement("div");
+//       header.className = "share-preview-header";
+//       header.innerHTML = `
+//       <div class="share-preview-title">\u5206\u4EAB\u9884\u89C8</div>
+//       <button class="share-preview-close" aria-label="\u5173\u95ED\u9884\u89C8" title="\u5173\u95ED">\xD7</button>
+//     `;
+//       const body = document.createElement("div");
+//       body.className = "share-preview-body";
+//       const previewWrapper = document.createElement("div");
+//       previewWrapper.className = "share-preview-canvas-wrap";
+//       previewWrapper.appendChild(canvas);
+//       body.appendChild(previewWrapper);
+//       const actions = document.createElement("div");
+//       actions.className = "share-preview-actions";
+//       const copyBtn = document.createElement("button");
+//       copyBtn.className = "share-action primary";
+//       copyBtn.textContent = "\u590D\u5236\u5230\u526A\u8D34\u677F";
+//       const downloadBtn = document.createElement("button");
+//       downloadBtn.className = "share-action";
+//       downloadBtn.textContent = "\u4E0B\u8F7D\u56FE\u7247";
+//       const copyLinkBtn = document.createElement("button");
+//       copyLinkBtn.className = "share-action";
+//       copyLinkBtn.textContent = "\u590D\u5236\u94FE\u63A5";
+//       const cancelBtn = document.createElement("button");
+//       cancelBtn.className = "share-action subtle";
+//       cancelBtn.textContent = "\u53D6\u6D88";
+//       actions.append(copyBtn, downloadBtn, copyLinkBtn, cancelBtn);
+//       modal.append(header, body, actions);
+//       overlay.appendChild(modal);
+//       document.body.appendChild(overlay);
+//       const cleanup = () => overlay.remove();
+//       overlay.addEventListener("click", (e) => {
+//         if (e.target === overlay)
+//           cleanup();
+//       });
+//       header.querySelector(".share-preview-close")?.addEventListener("click", cleanup);
+//       const onKey = (e) => {
+//         if (e.key === "Escape") {
+//           cleanup();
+//           document.removeEventListener("keydown", onKey);
+//         }
+//       };
+//       document.addEventListener("keydown", onKey);
+//       copyBtn.addEventListener("click", async () => {
+//         const ok = await this.tryClipboard(blob);
+//         if (ok) {
+//           this.toast("\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F");
+//           cleanup();
+//         } else {
+//           this.toast("\u526A\u8D34\u677F\u4E0D\u53EF\u7528\uFF0C\u5DF2\u81EA\u52A8\u4E0B\u8F7D");
+//           this.triggerDownload(blob, card.title);
+//           cleanup();
+//         }
+//       });
+//       downloadBtn.addEventListener("click", () => {
+//         this.triggerDownload(blob, card.title);
+//         this.toast("\u5DF2\u5F00\u59CB\u4E0B\u8F7D");
+//         cleanup();
+//       });
+//       copyLinkBtn.addEventListener("click", async () => {
+//         try {
+//           const link = this.buildDeepLink(card);
+//           await navigator.clipboard.writeText(link);
+//           this.toast("\u94FE\u63A5\u5DF2\u590D\u5236");
+//         } catch {
+//           this.toast("\u590D\u5236\u94FE\u63A5\u5931\u8D25");
+//         }
+//       });
+//       cancelBtn.addEventListener("click", cleanup);
+//       header.querySelector(".share-preview-close")?.focus();
+//     }
+//     async tryClipboard(blob) {
+//       try {
+//         if (navigator.clipboard && window.ClipboardItem) {
+//           const item = new ClipboardItem({ "image/png": blob });
+//           await navigator.clipboard.write([item]);
+//           return true;
+//         }
+//       } catch {
+//       }
+//       return false;
+//     }
+//     triggerDownload(blob, title) {
+//       const url = URL.createObjectURL(blob);
+//       const a = document.createElement("a");
+//       a.href = url;
+//       const safeTitle = (title || "share").replace(/[\n\t\s]+/g, "_").slice(0, 60);
+//       a.download = `${safeTitle}.png`;
+//       document.body.appendChild(a);
+//       a.click();
+//       a.remove();
+//       URL.revokeObjectURL(url);
+//     }
+//     async renderCanvas(card) {
+//       const canvas = document.createElement("canvas");
+//       canvas.width = this.width;
+//       canvas.height = this.height;
+//       const ctx = canvas.getContext("2d");
+//       try {
+//         await document.fonts?.ready;
+//       } catch {
+//       }
+//       ctx.fillStyle = "#ffffff";
+//       ctx.fillRect(0, 0, this.width, this.height);
+//       const headerH = 160;
+//       const grad = ctx.createLinearGradient(0, 0, this.width, 0);
+//       grad.addColorStop(0, "#eff6ff");
+//       grad.addColorStop(1, "#f8fafc");
+//       ctx.fillStyle = grad;
+//       ctx.fillRect(0, 0, this.width, headerH);
+//       let y = this.padding;
+//       const icon = this.getIcon(card.category) || "\u{1F4CB}";
+//       const iconR = 44;
+//       const iconCx = this.padding + iconR;
+//       const iconCy = y + iconR;
+//       ctx.fillStyle = "#e5f2ff";
+//       this.roundRect(ctx, iconCx - iconR, iconCy - iconR, iconR * 2, iconR * 2, 24);
+//       ctx.fill();
+//       ctx.font = "48px system-ui, -apple-system, Segoe UI, Roboto";
+//       ctx.textAlign = "center";
+//       ctx.textBaseline = "middle";
+//       ctx.fillStyle = "#111827";
+//       ctx.fillText(icon, iconCx, iconCy + 2);
+//       const titleX = iconCx + iconR + 24;
+//       const titleMaxWidth = this.width - titleX - this.padding;
+//       ctx.textAlign = "left";
+//       ctx.textBaseline = "alphabetic";
+//       ctx.fillStyle = "#0f172a";
+//       ctx.font = "bold 48px ui-sans-serif, -apple-system, system-ui, Segoe UI, Roboto";
+//       y += 8;
+//       y = this.wrapText(ctx, card.title || "", titleX, y + 24, titleMaxWidth, 56, 2);
+//       ctx.font = "28px ui-sans-serif, -apple-system, system-ui";
+//       ctx.fillStyle = "#475569";
+//       const metaParts = [];
+//       if (card.difficulty)
+//         metaParts.push(this.mapDifficulty(card.difficulty));
+//       if (card.readTime)
+//         metaParts.push(`\u{1F4D6} ${card.readTime}`);
+//       if (metaParts.length) {
+//         y += 8;
+//         ctx.fillText(metaParts.join("  \xB7  "), titleX, y + 24);
+//         y += 48;
+//       } else {
+//         y += 40;
+//       }
+//       const bodyX = this.padding;
+//       const bodyMaxWidth = this.width - this.padding * 2;
+//       ctx.font = "32px ui-sans-serif, -apple-system, system-ui";
+//       ctx.fillStyle = "#111827";
+//       if (card.description) {
+//         y = this.wrapText(ctx, card.description, bodyX, y + 24, bodyMaxWidth, 44, 3);
+//       } else if (card.overview) {
+//         y = this.wrapText(ctx, card.overview, bodyX, y + 24, bodyMaxWidth, 44, 3);
+//       }
+//       const tips = (card.tips || []).slice(0, 2);
+//       if (tips.length) {
+//         y += 24;
+//         tips.forEach((tip) => {
+//           y = this.renderTip(ctx, tip.title + "\uFF1A" + tip.content, bodyX, y, bodyMaxWidth);
+//           y += 16;
+//         });
+//       }
+//       const tags = (card.tags || []).slice(0, 3);
+//       if (tags.length) {
+//         y += 16;
+//         this.renderTags(ctx, tags, bodyX, y);
+//         y += 56;
+//       }
+//       const qrSize = 220;
+//       const qrX = this.width - this.padding - qrSize;
+//       const qrY = this.height - this.padding - qrSize;
+//       await this.drawQrOrPlaceholder(ctx, card, qrX, qrY, qrSize);
+//       ctx.save();
+//       ctx.globalAlpha = 0.85;
+//       ctx.textAlign = "left";
+//       ctx.textBaseline = "alphabetic";
+//       ctx.font = "bold 28px ui-sans-serif, -apple-system, system-ui";
+//       ctx.fillStyle = "#0f172a";
+//       ctx.fillText("aispeeds.me", this.padding, this.height - this.padding / 2);
+//       ctx.restore();
+//       return canvas;
+//     }
+//     buildDeepLink(card) {
+//       try {
+//         if (this.options.deepLinkBuilder)
+//           return this.options.deepLinkBuilder(card);
+//         const url = new URL(window.location.href);
+//         const moduleName = this.options.moduleName || "best-practices";
+//         url.searchParams.set("module", moduleName);
+//         url.searchParams.set("view", "article");
+//         url.searchParams.set("cardId", card.id || "");
+//         return url.toString();
+//       } catch {
+//         return window.location.href;
+//       }
+//     }
+//     async drawQrOrPlaceholder(ctx, card, x, y, size) {
+//       ctx.strokeStyle = "#cbd5e1";
+//       ctx.lineWidth = 3;
+//       this.roundRect(ctx, x, y, size, size, 16);
+//       ctx.stroke();
+//       const deepLink = this.buildDeepLink(card);
+//       const img = await this.loadQrImage(deepLink, size).catch(() => null);
+//       if (!img) {
+//         ctx.font = "24px ui-sans-serif, -apple-system, system-ui";
+//         ctx.fillStyle = "#64748b";
+//         ctx.textAlign = "center";
+//         ctx.textBaseline = "middle";
+//         ctx.fillText("QR \u9884\u7559", x + size / 2, y + size / 2);
+//         return;
+//       }
+//       const pad = 10;
+//       ctx.fillStyle = "#ffffff";
+//       this.roundRect(ctx, x + 2, y + 2, size - 4, size - 4, 12);
+//       ctx.fill();
+//       ctx.drawImage(img, x + pad, y + pad, size - pad * 2, size - pad * 2);
+//     }
+//     async loadQrImage(data, size) {
+//       const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(
+//         data
+//       )}`;
+//       await new Promise((resolve) => setTimeout(resolve, 0));
+//       return new Promise((resolve, reject) => {
+//         const img = new Image();
+//         img.crossOrigin = "anonymous";
+//         img.onload = () => resolve(img);
+//         img.onerror = () => reject(new Error("QR load failed"));
+//         img.src = url;
+//       });
+//     }
+//     renderTip(ctx, text, x, y, maxWidth) {
+//       const lineH = 40;
+//       const padding = 16;
+//       const lines = this.splitLines(ctx, text, maxWidth - padding * 2);
+//       const boxH = lines.length * lineH + padding * 2;
+//       ctx.fillStyle = "rgba(6, 182, 212, 0.08)";
+//       this.roundRect(ctx, x, y, maxWidth, boxH, 12);
+//       ctx.fill();
+//       ctx.fillStyle = "#06b6d4";
+//       ctx.fillRect(x, y, 6, boxH);
+//       ctx.fillStyle = "#0f172a";
+//       ctx.font = "28px ui-sans-serif, -apple-system, system-ui";
+//       let ty = y + padding + 28;
+//       lines.forEach((line) => {
+//         ctx.fillText(line, x + padding + 10, ty);
+//         ty += lineH;
+//       });
+//       return y + boxH;
+//     }
+//     renderTags(ctx, tags, x, y) {
+//       ctx.font = "26px ui-sans-serif, -apple-system, system-ui";
+//       let cx = x;
+//       const py = y;
+//       tags.forEach((tag) => {
+//         const paddingX = 18;
+//         const paddingY = 10;
+//         const w = ctx.measureText(tag).width + paddingX * 2;
+//         const h = 40;
+//         ctx.fillStyle = "#f1f5f9";
+//         this.roundRect(ctx, cx, py - h + paddingY, w, h, 20);
+//         ctx.fill();
+//         ctx.fillStyle = "#475569";
+//         ctx.fillText(tag, cx + paddingX, py - 12);
+//         cx += w + 12;
+//       });
+//     }
+//     mapDifficulty(d) {
+//       switch (d) {
+//         case "beginner":
+//           return "\u5165\u95E8";
+//         case "intermediate":
+//           return "\u8FDB\u9636";
+//         case "expert":
+//           return "\u4E13\u5BB6";
+//         default:
+//           return d;
+//       }
+//     }
+//     wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+//       const lines = this.splitLines(ctx, text, maxWidth, maxLines);
+//       lines.forEach((line, i) => {
+//         ctx.fillText(line, x, y + i * lineHeight);
+//       });
+//       return y + Math.min(lines.length, maxLines) * lineHeight;
+//     }
+//     splitLines(ctx, text, maxWidth, maxLines) {
+//       const words = text.split(/\s+/);
+//       const lines = [];
+//       let current = "";
+//       for (let i = 0; i < words.length; i++) {
+//         const test = current ? `${current} ${words[i]}` : words[i];
+//         if (ctx.measureText(test).width <= maxWidth) {
+//           current = test;
+//         } else {
+//           if (current)
+//             lines.push(current);
+//           current = words[i];
+//           if (maxLines && lines.length >= maxLines - 1) {
+//             while (ctx.measureText(current + "\u2026").width > maxWidth && current.length > 0) {
+//               current = current.slice(0, -1);
+//             }
+//             current = current + "\u2026";
+//             break;
+//           }
+//         }
+//       }
+//       if (current)
+//         lines.push(current);
+//       return lines;
+//     }
+//     roundRect(ctx, x, y, w, h, r) {
+//       const radius = Math.min(r, w / 2, h / 2);
+//       ctx.beginPath();
+//       ctx.moveTo(x + radius, y);
+//       ctx.arcTo(x + w, y, x + w, y + h, radius);
+//       ctx.arcTo(x + w, y + h, x, y + h, radius);
+//       ctx.arcTo(x, y + h, x, y, radius);
+//       ctx.arcTo(x, y, x + w, y, radius);
+//       ctx.closePath();
+//     }
+//     toast(message) {
+//       const el = document.createElement("div");
+//       el.textContent = message;
+//       el.style.position = "fixed";
+//       el.style.left = "50%";
+//       el.style.top = "16px";
+//       el.style.transform = "translateX(-50%)";
+//       el.style.background = "rgba(17, 24, 39, 0.9)";
+//       el.style.color = "#fff";
+//       el.style.padding = "8px 12px";
+//       el.style.borderRadius = "8px";
+//       el.style.fontSize = "14px";
+//       el.style.zIndex = "9999";
+//       el.style.pointerEvents = "none";
+//       document.body.appendChild(el);
+//       setTimeout(() => el.remove(), 1800);
+//     }
+//   };
+// 
 //   // src/client/shared/handlers/BaseArticleEventHandler.ts
 //   var EXIT_ANIMATION_DURATION = 230;
 //   var BaseArticleEventHandler = class {
@@ -15452,6 +15852,8 @@ export const howToApplyCCModule = `
 //       __publicField(this, "contentService");
 //       __publicField(this, "articleRenderer");
 //       __publicField(this, "onBackToOverview");
+//       __publicField(this, "_shareService");
+//       __publicField(this, "_suppressHistory", false);
 //       this.containerId = containerId;
 //       this.boundClickHandler = this.handleCardClick.bind(this);
 //       this.contentService = contentService;
@@ -15486,10 +15888,39 @@ export const howToApplyCCModule = `
 //       if (isInArticleView) {
 //         return;
 //       }
+//       const shareBtn = target.closest(".overview-card__share-btn");
+//       if (shareBtn) {
+//         event.stopPropagation();
+//         event.preventDefault();
+//         const cardId2 = shareBtn.getAttribute("data-card-id");
+//         if (!cardId2)
+//           return;
+//         const card = this.resolveCardById(cardId2);
+//         if (!card)
+//           return;
+//         this._shareService = this._shareService || new ShareService(this.getIcon.bind(this), {
+//           moduleName: this.getModuleName()
+//         });
+//         void this._shareService.openPreview(card);
+//         return;
+//       }
 //       const cardId = this.extractCardId(target);
 //       if (!cardId)
 //         return;
 //       this.showDetailedContent(cardId);
+//     }
+//     // 提供可公开调用的方法用于根据 cardId 打开文章（用于深链接入口）
+//     openArticle(cardId) {
+//       return this.showDetailedContent(cardId);
+//     }
+//     // 从浏览器历史导航进入时打开文章，不再 pushState，避免破坏历史栈
+//     async openArticleFromHistory(cardId) {
+//       this._suppressHistory = true;
+//       try {
+//         await this.showDetailedContent(cardId);
+//       } finally {
+//         this._suppressHistory = false;
+//       }
 //     }
 //     // Default: click on whole card, fallback to action button
 //     extractCardId(target) {
@@ -15542,6 +15973,9 @@ export const howToApplyCCModule = `
 //           this.addEnhancedFeatures(markdownContainer);
 //         }
 //         this.configureBackNavigation();
+//         if (!this._suppressHistory) {
+//           this.updateHistoryForArticle(cardId);
+//         }
 //       } catch (error) {
 //         console.error("\u52A0\u8F7D\u6587\u7AE0\u5931\u8D25:", error);
 //         const message = error instanceof Error ? error.message : String(error);
@@ -15582,12 +16016,14 @@ export const howToApplyCCModule = `
 //           articleEl.classList.add("is-exiting");
 //           setTimeout(() => {
 //             this.onBackToOverview();
+//             this.updateHistoryForOverview();
 //             window.scrollTo({ top: 0, behavior: "smooth" });
 //           }, EXIT_ANIMATION_DURATION);
 //           return;
 //         }
 //       }
 //       this.onBackToOverview();
+//       this.updateHistoryForOverview();
 //     }
 //     // Shared enhancements below
 //     addEnhancedFeatures(container) {
@@ -15662,7 +16098,168 @@ export const howToApplyCCModule = `
 //       window.addEventListener("scroll", toggleBackToTop);
 //       toggleBackToTop();
 //     }
+//     // —— URL 深链接辅助方法 ——
+//     updateHistoryForArticle(cardId) {
+//       try {
+//         const url = new URL(window.location.href);
+//         url.searchParams.set("module", this.getModuleName());
+//         url.searchParams.set("view", "article");
+//         url.searchParams.set("cardId", cardId);
+//         window.history.pushState(
+//           { module: this.getModuleName(), view: "article", cardId },
+//           "",
+//           url.toString()
+//         );
+//       } catch {
+//       }
+//     }
+//     updateHistoryForOverview() {
+//       try {
+//         const url = new URL(window.location.href);
+//         url.searchParams.set("module", this.getModuleName());
+//         url.searchParams.set("view", "overview");
+//         url.searchParams.delete("cardId");
+//         window.history.pushState(
+//           { module: this.getModuleName(), view: "overview" },
+//           "",
+//           url.toString()
+//         );
+//       } catch {
+//       }
+//     }
 //   };
+// 
+//   // src/client/howToApplyCC/data/cardsData.ts
+//   var howToApplyCCCards = [
+//     {
+//       id: "sdk-quick-install",
+//       title: "SDK\u5FEB\u901F\u5B89\u88C5",
+//       description: "\u5FEB\u901F\u5B89\u88C5\u914D\u7F6E Claude Code SDK\uFF0C\u652F\u6301\u547D\u4EE4\u884C\u3001TypeScript \u548C Python \u4E09\u79CD\u4F7F\u7528\u65B9\u5F0F",
+//       category: "quick-start",
+//       tags: ["\u5B89\u88C5\u914D\u7F6E", "\u5FEB\u901F\u5F00\u59CB", "CLI", "TypeScript", "Python"],
+//       tips: [
+//         {
+//           type: "tip",
+//           title: "\u63A8\u8350\u65B9\u5F0F",
+//           content: "\u5BF9\u4E8E\u5FEB\u901F\u539F\u578B\u5F00\u53D1\u63A8\u8350\u4F7F\u7528\u547D\u4EE4\u884C\u65B9\u5F0F\uFF0C\u751F\u4EA7\u73AF\u5883\u63A8\u8350 TypeScript \u6216 Python SDK"
+//         },
+//         {
+//           type: "info",
+//           title: "\u73AF\u5883\u8981\u6C42",
+//           content: "Node.js 18+ \u662F\u5FC5\u9700\u7684\uFF0C\u5373\u4F7F\u4F7F\u7528 Python SDK \u4E5F\u9700\u8981 NPM \u4F9D\u8D56"
+//         }
+//       ]
+//     },
+//     {
+//       id: "create-first-agent",
+//       title: "\u521B\u5EFA\u7B2C\u4E00\u4E2AAgent",
+//       description: "\u901A\u8FC7\u5177\u4F53\u793A\u4F8B\u5B66\u4E60\u521B\u5EFA\u4E13\u4E1AAI Agent\uFF0C\u5305\u62EC\u6CD5\u5F8B\u52A9\u624B\u3001SRE\u4E13\u5BB6\u7B49\u5B9E\u9645\u573A\u666F",
+//       category: "quick-start",
+//       tips: [
+//         {
+//           type: "success",
+//           title: "\u5B9E\u7528\u5EFA\u8BAE",
+//           content: "\u4ECE\u7B80\u5355\u7684\u5355\u4E00\u529F\u80FD Agent \u5F00\u59CB\uFF0C\u9010\u6B65\u589E\u52A0\u590D\u6742\u5EA6\u548C\u5DE5\u5177\u96C6\u6210"
+//         },
+//         {
+//           type: "expert",
+//           title: "\u4E13\u4E1A\u63D0\u793A",
+//           content: "\u6E05\u6670\u7684\u7CFB\u7EDF\u63D0\u793A\u8BCD\u662F Agent \u8868\u73B0\u4F18\u79C0\u7684\u5173\u952E\uFF0C\u8981\u660E\u786E\u5B9A\u4E49\u89D2\u8272\u3001\u76EE\u6807\u548C\u7EA6\u675F"
+//         }
+//       ]
+//     },
+//     {
+//       id: "api-authentication",
+//       title: "API\u8BA4\u8BC1\u914D\u7F6E",
+//       description: "\u638C\u63E1\u591A\u79CDAPI\u8BA4\u8BC1\u65B9\u5F0F\uFF0C\u5305\u62ECAnthropic\u76F4\u8FDE\u3001Amazon Bedrock\u548CGoogle Vertex AI",
+//       category: "core-usage",
+//       tips: [
+//         {
+//           type: "info",
+//           title: "\u6210\u672C\u8003\u8651",
+//           content: "\u4E0D\u540C\u63D0\u4F9B\u5546\u7684\u5B9A\u4EF7\u7B56\u7565\u4E0D\u540C\uFF0C\u9009\u62E9\u8BA4\u8BC1\u65B9\u5F0F\u65F6\u8981\u8003\u8651\u6210\u672C\u548C\u5730\u57DF\u9650\u5236"
+//         },
+//         {
+//           type: "warning",
+//           title: "\u5B89\u5168\u63D0\u9192",
+//           content: "\u751F\u4EA7\u73AF\u5883\u4E2D\u907F\u514D\u786C\u7F16\u7801 API \u5BC6\u94A5\uFF0C\u4F7F\u7528\u73AF\u5883\u53D8\u91CF\u548C\u5BC6\u94A5\u7BA1\u7406\u670D\u52A1"
+//         }
+//       ]
+//     },
+//     {
+//       id: "multi-turn-conversations",
+//       title: "\u591A\u8F6E\u5BF9\u8BDD\u7BA1\u7406",
+//       description: "\u5B66\u4E60\u7BA1\u7406\u590D\u6742\u7684\u591A\u8F6E\u5BF9\u8BDD\uFF0C\u5305\u62EC\u4F1A\u8BDD\u6301\u7EED\u3001\u72B6\u6001\u4FDD\u6301\u548C\u4E0A\u4E0B\u6587\u7BA1\u7406",
+//       category: "core-usage",
+//       tags: ["\u591A\u8F6E\u5BF9\u8BDD", "\u4F1A\u8BDD\u7BA1\u7406", "\u72B6\u6001\u4FDD\u6301", "\u4E0A\u4E0B\u6587\u7BA1\u7406"],
+//       tips: [
+//         {
+//           type: "expert",
+//           title: "\u67B6\u6784\u5EFA\u8BAE",
+//           content: "\u5BF9\u4E8E\u590D\u6742\u4E1A\u52A1\u6D41\u7A0B\uFF0C\u5EFA\u8BAE\u4F7F\u7528 Python SDK \u7684\u6301\u4E45\u8FDE\u63A5\u6A21\u5F0F\u7EF4\u62A4\u4F1A\u8BDD\u72B6\u6001"
+//         },
+//         {
+//           type: "tip",
+//           title: "\u6027\u80FD\u4F18\u5316",
+//           content: "\u5408\u7406\u63A7\u5236 maxTurns \u53C2\u6570\u907F\u514D\u65E0\u9650\u5FAA\u73AF\uFF0C\u540C\u65F6\u4FDD\u6301\u8DB3\u591F\u7684\u4EA4\u4E92\u6DF1\u5EA6"
+//         }
+//       ]
+//     },
+//     {
+//       id: "custom-system-prompts",
+//       title: "\u81EA\u5B9A\u4E49\u7CFB\u7EDF\u63D0\u793A\u8BCD",
+//       description: "\u5B66\u4E60\u7F16\u5199\u9AD8\u8D28\u91CF\u7684\u7CFB\u7EDF\u63D0\u793A\u8BCD\uFF0C\u5B9A\u4E49Agent\u7684\u4E13\u4E1A\u89D2\u8272\u3001\u884C\u4E3A\u6A21\u5F0F\u548C\u9886\u57DFexpertise",
+//       category: "core-usage",
+//       tips: [
+//         {
+//           type: "expert",
+//           title: "\u8BBE\u8BA1\u539F\u5219",
+//           content: '\u4F18\u79C0\u7684\u7CFB\u7EDF\u63D0\u793A\u8BCD\u5E94\u8BE5\u660E\u786E\u5B9A\u4E49"\u662F\u4EC0\u4E48"\u3001"\u505A\u4EC0\u4E48"\u3001"\u4E0D\u505A\u4EC0\u4E48"\u4E09\u4E2A\u5173\u952E\u8981\u7D20'
+//         },
+//         {
+//           type: "success",
+//           title: "\u6D4B\u8BD5\u5EFA\u8BAE",
+//           content: "\u901A\u8FC7\u591A\u8F6E\u5BF9\u8BDD\u6D4B\u8BD5\u63D0\u793A\u8BCD\u7684\u4E00\u81F4\u6027\uFF0C\u786E\u4FDD Agent \u5728\u4E0D\u540C\u573A\u666F\u4E0B\u7684\u8868\u73B0\u7A33\u5B9A"
+//         }
+//       ]
+//     },
+//     {
+//       id: "output-format-control",
+//       title: "\u8F93\u51FA\u683C\u5F0F\u63A7\u5236",
+//       description: "\u638C\u63E1Text\u3001JSON\u3001Stream\u4E09\u79CD\u8F93\u51FA\u683C\u5F0F\uFF0C\u4E3A\u4E0D\u540C\u5E94\u7528\u573A\u666F\u9009\u62E9\u6700\u9002\u5408\u7684\u6570\u636E\u4EA4\u4E92\u65B9\u5F0F",
+//       category: "core-usage",
+//       tips: [
+//         {
+//           type: "info",
+//           title: "\u6027\u80FD\u8003\u8651",
+//           content: "\u6D41\u5F0F\u8F93\u51FA\u80FD\u663E\u8457\u6539\u5584\u7528\u6237\u4F53\u9A8C\uFF0C\u7279\u522B\u662F\u5BF9\u4E8E\u957F\u65F6\u95F4\u8FD0\u884C\u7684 Agent \u4EFB\u52A1"
+//         },
+//         {
+//           type: "tip",
+//           title: "\u96C6\u6210\u5EFA\u8BAE",
+//           content: "JSON \u683C\u5F0F\u5305\u542B\u6210\u672C\u3001\u8017\u65F6\u7B49\u5143\u6570\u636E\uFF0C\u4FBF\u4E8E\u76D1\u63A7\u548C\u4F18\u5316 Agent \u6027\u80FD"
+//         }
+//       ]
+//     },
+//     {
+//       id: "mcp-tools-integration",
+//       title: "MCP\u5DE5\u5177\u96C6\u6210",
+//       description: "\u901A\u8FC7\u6A21\u578B\u4E0A\u4E0B\u6587\u534F\u8BAE(MCP)\u6269\u5C55Agent\u80FD\u529B\uFF0C\u96C6\u6210Slack\u3001JIRA\u3001\u6570\u636E\u5E93\u7B49\u5916\u90E8\u5DE5\u5177",
+//       category: "advanced",
+//       tips: [
+//         {
+//           type: "warning",
+//           title: "\u5B89\u5168\u6CE8\u610F",
+//           content: "MCP \u5DE5\u5177\u9700\u8981\u663E\u5F0F\u6388\u6743\u624D\u80FD\u4F7F\u7528\uFF0C\u9075\u5FAA\u6700\u5C0F\u6743\u9650\u539F\u5219\u914D\u7F6E\u5DE5\u5177\u8BBF\u95EE"
+//         },
+//         {
+//           type: "expert",
+//           title: "\u67B6\u6784\u8BBE\u8BA1",
+//           content: "\u4E3A\u4E0D\u540C\u4E1A\u52A1\u573A\u666F\u8BBE\u8BA1\u4E13\u95E8\u7684 MCP \u5DE5\u5177\u7EC4\u5408\uFF0C\u5982 SRE \u5DE5\u5177\u5305\u3001\u5F00\u53D1\u5DE5\u5177\u5305\u7B49"
+//         }
+//       ]
+//     }
+//   ];
 // 
 //   // src/client/howToApplyCC/handlers/EventHandler.ts
 //   var HowToApplyCCEventHandler = class extends BaseArticleEventHandler {
@@ -15673,6 +16270,12 @@ export const howToApplyCCModule = `
 //         articleRenderer,
 //         () => window.initializeHowToApplyCC()
 //       );
+//     }
+//     resolveCardById(id) {
+//       return howToApplyCCCards.find((c) => c.id === id) || null;
+//     }
+//     getIcon(category) {
+//       return applyCCCategoryConfig[category] || "\u{1F4CB}";
 //     }
 //   };
 // 
@@ -15817,138 +16420,6 @@ export const howToApplyCCModule = `
 //       return this.renderer.render(markdown2);
 //     }
 //   };
-// 
-//   // src/client/howToApplyCC/data/cardsData.ts
-//   var howToApplyCCCards = [
-//     {
-//       id: "sdk-quick-install",
-//       title: "SDK\u5FEB\u901F\u5B89\u88C5",
-//       description: "\u5FEB\u901F\u5B89\u88C5\u914D\u7F6E Claude Code SDK\uFF0C\u652F\u6301\u547D\u4EE4\u884C\u3001TypeScript \u548C Python \u4E09\u79CD\u4F7F\u7528\u65B9\u5F0F",
-//       category: "quick-start",
-//       tags: ["\u5B89\u88C5\u914D\u7F6E", "\u5FEB\u901F\u5F00\u59CB", "CLI", "TypeScript", "Python"],
-//       tips: [
-//         {
-//           type: "tip",
-//           title: "\u63A8\u8350\u65B9\u5F0F",
-//           content: "\u5BF9\u4E8E\u5FEB\u901F\u539F\u578B\u5F00\u53D1\u63A8\u8350\u4F7F\u7528\u547D\u4EE4\u884C\u65B9\u5F0F\uFF0C\u751F\u4EA7\u73AF\u5883\u63A8\u8350 TypeScript \u6216 Python SDK"
-//         },
-//         {
-//           type: "info",
-//           title: "\u73AF\u5883\u8981\u6C42",
-//           content: "Node.js 18+ \u662F\u5FC5\u9700\u7684\uFF0C\u5373\u4F7F\u4F7F\u7528 Python SDK \u4E5F\u9700\u8981 NPM \u4F9D\u8D56"
-//         }
-//       ]
-//     },
-//     {
-//       id: "create-first-agent",
-//       title: "\u521B\u5EFA\u7B2C\u4E00\u4E2AAgent",
-//       description: "\u901A\u8FC7\u5177\u4F53\u793A\u4F8B\u5B66\u4E60\u521B\u5EFA\u4E13\u4E1AAI Agent\uFF0C\u5305\u62EC\u6CD5\u5F8B\u52A9\u624B\u3001SRE\u4E13\u5BB6\u7B49\u5B9E\u9645\u573A\u666F",
-//       category: "quick-start",
-//       tips: [
-//         {
-//           type: "success",
-//           title: "\u5B9E\u7528\u5EFA\u8BAE",
-//           content: "\u4ECE\u7B80\u5355\u7684\u5355\u4E00\u529F\u80FD Agent \u5F00\u59CB\uFF0C\u9010\u6B65\u589E\u52A0\u590D\u6742\u5EA6\u548C\u5DE5\u5177\u96C6\u6210"
-//         },
-//         {
-//           type: "expert",
-//           title: "\u4E13\u4E1A\u63D0\u793A",
-//           content: "\u6E05\u6670\u7684\u7CFB\u7EDF\u63D0\u793A\u8BCD\u662F Agent \u8868\u73B0\u4F18\u79C0\u7684\u5173\u952E\uFF0C\u8981\u660E\u786E\u5B9A\u4E49\u89D2\u8272\u3001\u76EE\u6807\u548C\u7EA6\u675F"
-//         }
-//       ]
-//     },
-//     {
-//       id: "api-authentication",
-//       title: "API\u8BA4\u8BC1\u914D\u7F6E",
-//       description: "\u638C\u63E1\u591A\u79CDAPI\u8BA4\u8BC1\u65B9\u5F0F\uFF0C\u5305\u62ECAnthropic\u76F4\u8FDE\u3001Amazon Bedrock\u548CGoogle Vertex AI",
-//       category: "core-usage",
-//       tips: [
-//         {
-//           type: "info",
-//           title: "\u6210\u672C\u8003\u8651",
-//           content: "\u4E0D\u540C\u63D0\u4F9B\u5546\u7684\u5B9A\u4EF7\u7B56\u7565\u4E0D\u540C\uFF0C\u9009\u62E9\u8BA4\u8BC1\u65B9\u5F0F\u65F6\u8981\u8003\u8651\u6210\u672C\u548C\u5730\u57DF\u9650\u5236"
-//         },
-//         {
-//           type: "warning",
-//           title: "\u5B89\u5168\u63D0\u9192",
-//           content: "\u751F\u4EA7\u73AF\u5883\u4E2D\u907F\u514D\u786C\u7F16\u7801 API \u5BC6\u94A5\uFF0C\u4F7F\u7528\u73AF\u5883\u53D8\u91CF\u548C\u5BC6\u94A5\u7BA1\u7406\u670D\u52A1"
-//         }
-//       ]
-//     },
-//     {
-//       id: "multi-turn-conversations",
-//       title: "\u591A\u8F6E\u5BF9\u8BDD\u7BA1\u7406",
-//       description: "\u5B66\u4E60\u7BA1\u7406\u590D\u6742\u7684\u591A\u8F6E\u5BF9\u8BDD\uFF0C\u5305\u62EC\u4F1A\u8BDD\u6301\u7EED\u3001\u72B6\u6001\u4FDD\u6301\u548C\u4E0A\u4E0B\u6587\u7BA1\u7406",
-//       category: "core-usage",
-//       tags: ["\u591A\u8F6E\u5BF9\u8BDD", "\u4F1A\u8BDD\u7BA1\u7406", "\u72B6\u6001\u4FDD\u6301", "\u4E0A\u4E0B\u6587\u7BA1\u7406"],
-//       tips: [
-//         {
-//           type: "expert",
-//           title: "\u67B6\u6784\u5EFA\u8BAE",
-//           content: "\u5BF9\u4E8E\u590D\u6742\u4E1A\u52A1\u6D41\u7A0B\uFF0C\u5EFA\u8BAE\u4F7F\u7528 Python SDK \u7684\u6301\u4E45\u8FDE\u63A5\u6A21\u5F0F\u7EF4\u62A4\u4F1A\u8BDD\u72B6\u6001"
-//         },
-//         {
-//           type: "tip",
-//           title: "\u6027\u80FD\u4F18\u5316",
-//           content: "\u5408\u7406\u63A7\u5236 maxTurns \u53C2\u6570\u907F\u514D\u65E0\u9650\u5FAA\u73AF\uFF0C\u540C\u65F6\u4FDD\u6301\u8DB3\u591F\u7684\u4EA4\u4E92\u6DF1\u5EA6"
-//         }
-//       ]
-//     },
-//     {
-//       id: "custom-system-prompts",
-//       title: "\u81EA\u5B9A\u4E49\u7CFB\u7EDF\u63D0\u793A\u8BCD",
-//       description: "\u5B66\u4E60\u7F16\u5199\u9AD8\u8D28\u91CF\u7684\u7CFB\u7EDF\u63D0\u793A\u8BCD\uFF0C\u5B9A\u4E49Agent\u7684\u4E13\u4E1A\u89D2\u8272\u3001\u884C\u4E3A\u6A21\u5F0F\u548C\u9886\u57DFexpertise",
-//       category: "core-usage",
-//       tips: [
-//         {
-//           type: "expert",
-//           title: "\u8BBE\u8BA1\u539F\u5219",
-//           content: '\u4F18\u79C0\u7684\u7CFB\u7EDF\u63D0\u793A\u8BCD\u5E94\u8BE5\u660E\u786E\u5B9A\u4E49"\u662F\u4EC0\u4E48"\u3001"\u505A\u4EC0\u4E48"\u3001"\u4E0D\u505A\u4EC0\u4E48"\u4E09\u4E2A\u5173\u952E\u8981\u7D20'
-//         },
-//         {
-//           type: "success",
-//           title: "\u6D4B\u8BD5\u5EFA\u8BAE",
-//           content: "\u901A\u8FC7\u591A\u8F6E\u5BF9\u8BDD\u6D4B\u8BD5\u63D0\u793A\u8BCD\u7684\u4E00\u81F4\u6027\uFF0C\u786E\u4FDD Agent \u5728\u4E0D\u540C\u573A\u666F\u4E0B\u7684\u8868\u73B0\u7A33\u5B9A"
-//         }
-//       ]
-//     },
-//     {
-//       id: "output-format-control",
-//       title: "\u8F93\u51FA\u683C\u5F0F\u63A7\u5236",
-//       description: "\u638C\u63E1Text\u3001JSON\u3001Stream\u4E09\u79CD\u8F93\u51FA\u683C\u5F0F\uFF0C\u4E3A\u4E0D\u540C\u5E94\u7528\u573A\u666F\u9009\u62E9\u6700\u9002\u5408\u7684\u6570\u636E\u4EA4\u4E92\u65B9\u5F0F",
-//       category: "core-usage",
-//       tips: [
-//         {
-//           type: "info",
-//           title: "\u6027\u80FD\u8003\u8651",
-//           content: "\u6D41\u5F0F\u8F93\u51FA\u80FD\u663E\u8457\u6539\u5584\u7528\u6237\u4F53\u9A8C\uFF0C\u7279\u522B\u662F\u5BF9\u4E8E\u957F\u65F6\u95F4\u8FD0\u884C\u7684 Agent \u4EFB\u52A1"
-//         },
-//         {
-//           type: "tip",
-//           title: "\u96C6\u6210\u5EFA\u8BAE",
-//           content: "JSON \u683C\u5F0F\u5305\u542B\u6210\u672C\u3001\u8017\u65F6\u7B49\u5143\u6570\u636E\uFF0C\u4FBF\u4E8E\u76D1\u63A7\u548C\u4F18\u5316 Agent \u6027\u80FD"
-//         }
-//       ]
-//     },
-//     {
-//       id: "mcp-tools-integration",
-//       title: "MCP\u5DE5\u5177\u96C6\u6210",
-//       description: "\u901A\u8FC7\u6A21\u578B\u4E0A\u4E0B\u6587\u534F\u8BAE(MCP)\u6269\u5C55Agent\u80FD\u529B\uFF0C\u96C6\u6210Slack\u3001JIRA\u3001\u6570\u636E\u5E93\u7B49\u5916\u90E8\u5DE5\u5177",
-//       category: "advanced",
-//       tips: [
-//         {
-//           type: "warning",
-//           title: "\u5B89\u5168\u6CE8\u610F",
-//           content: "MCP \u5DE5\u5177\u9700\u8981\u663E\u5F0F\u6388\u6743\u624D\u80FD\u4F7F\u7528\uFF0C\u9075\u5FAA\u6700\u5C0F\u6743\u9650\u539F\u5219\u914D\u7F6E\u5DE5\u5177\u8BBF\u95EE"
-//         },
-//         {
-//           type: "expert",
-//           title: "\u67B6\u6784\u8BBE\u8BA1",
-//           content: "\u4E3A\u4E0D\u540C\u4E1A\u52A1\u573A\u666F\u8BBE\u8BA1\u4E13\u95E8\u7684 MCP \u5DE5\u5177\u7EC4\u5408\uFF0C\u5982 SRE \u5DE5\u5177\u5305\u3001\u5F00\u53D1\u5DE5\u5177\u5305\u7B49"
-//         }
-//       ]
-//     }
-//   ];
 // 
 //   // src/client/howToApplyCC/core/HowToApplyCCManager.ts
 //   var HowToApplyCCManager = class extends BaseContentManager {
