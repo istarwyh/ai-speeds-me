@@ -447,8 +447,8 @@ export const markdownStyles = `
   display: block;
   margin: 16px auto;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f9fafb);
 }
 
 .markdown-content img[loading="lazy"] {
@@ -459,9 +459,9 @@ export const markdownStyles = `
   display: inline-block;
   padding: 6px 8px;
   font-size: 0.9em;
-  color: #dc2626;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  color: var(--error, #dc2626);
+  background: var(--bg-error-light, #fef2f2);
+  border: 1px solid var(--border-error, #fecaca);
   border-radius: 6px;
 }
 

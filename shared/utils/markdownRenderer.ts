@@ -126,7 +126,8 @@ export class SafeMarkdownRenderer {
 
             // 允许 http/https 与相对路径，拒绝其他协议
             const isAllowedSrc = /^https?:\/\//.test(src) || src.startsWith('/') || src.startsWith('./') || src.startsWith('../');
-            if (!isAllowedSrc) {
+            const isDangerousProtocol = /^(data|javascript|vbscript|file|mailto|tel):/i.test(src);
+            if (!isAllowedSrc || isDangerousProtocol) {
                 // 以可见文本替代，避免渲染潜在危险协议
                 return `<span class="md-image-blocked">${self.escapeHtml(alt)}</span>`;
             }
@@ -177,9 +178,14 @@ export class SafeMarkdownRenderer {
      * 转义 HTML 字符以防止 XSS
      */
     private escapeHtml(text: string): string {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        const escapeMap: Record<string, string> = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return String(text).replace(/[&<>"']/g, (char) => escapeMap[char] || char);
     }
 
     /**

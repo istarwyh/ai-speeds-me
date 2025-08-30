@@ -8533,8 +8533,8 @@ export const implementationModule = `
 //   display: block;
 //   margin: 16px auto;
 //   border-radius: 8px;
-//   border: 1px solid #e5e7eb;
-//   background: #f9fafb;
+//   border: 1px solid var(--border-color, #e5e7eb);
+//   background: var(--bg-secondary, #f9fafb);
 // }
 // 
 // .markdown-content img[loading="lazy"] {
@@ -8545,9 +8545,9 @@ export const implementationModule = `
 //   display: inline-block;
 //   padding: 6px 8px;
 //   font-size: 0.9em;
-//   color: #dc2626;
-//   background: #fef2f2;
-//   border: 1px solid #fecaca;
+//   color: var(--error, #dc2626);
+//   background: var(--bg-error-light, #fef2f2);
+//   border: 1px solid var(--border-error, #fecaca);
 //   border-radius: 6px;
 // }
 // 
@@ -14561,7 +14561,8 @@ export const implementationModule = `
 //         const src = token.attrGet("src") || "";
 //         const alt = token.content || token.attrGet("alt") || "";
 //         const isAllowedSrc = /^https?:\/\//.test(src) || src.startsWith("/") || src.startsWith("./") || src.startsWith("../");
-//         if (!isAllowedSrc) {
+//         const isDangerousProtocol = /^(data|javascript|vbscript|file|mailto|tel):/i.test(src);
+//         if (!isAllowedSrc || isDangerousProtocol) {
 //           return `<span class="md-image-blocked">${self.escapeHtml(alt)}</span>`;
 //         }
 //         token.attrSet("loading", "lazy");
@@ -14631,9 +14632,14 @@ export const implementationModule = `
 //      * 转义 HTML 字符以防止 XSS
 //      */
 //     escapeHtml(text) {
-//       const div = document.createElement("div");
-//       div.textContent = text;
-//       return div.innerHTML;
+//       const escapeMap = {
+//         "&": "&amp;",
+//         "<": "&lt;",
+//         ">": "&gt;",
+//         '"': "&quot;",
+//         "'": "&#39;"
+//       };
+//       return String(text).replace(/[&<>"']/g, (char) => escapeMap[char] || char);
 //     }
 //     /**
 //      * 保留已经处理的 HTML 标签，对其他内容进行转义
