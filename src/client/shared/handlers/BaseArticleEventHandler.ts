@@ -109,7 +109,8 @@ export abstract class BaseArticleEventHandler {
         new GenericShareService<BaseContentCard>(this.getIcon.bind(this), {
           moduleName: this.getModuleName(),
         });
-      void this._shareService.openPreview(card);
+      const cardEl = shareBtn.closest('.overview-card') as HTMLElement | null;
+      void this._shareService.openPreview(card, { matchElement: cardEl || undefined });
       return;
     }
 

@@ -15486,8 +15486,9 @@ export const implementationModule = `
 //   // src/client/shared/services/ShareService.ts
 //   var ShareService = class {
 //     constructor(getIcon, options = {}) {
-//       __publicField(this, "width", 1080);
-//       __publicField(this, "height", 1440);
+//       // Default poster size; actual canvas may be computed per-card
+//       __publicField(this, "defaultWidth", 1080);
+//       __publicField(this, "defaultHeight", 1440);
 //       __publicField(this, "padding", 72);
 //       // 72px ~ 1in logical at 96dpi
 //       __publicField(this, "getIcon");
@@ -15523,8 +15524,9 @@ export const implementationModule = `
 //       }
 //     }
 //     // Open a preview modal to let users confirm and choose action
-//     async openPreview(card) {
-//       const canvas = await this.renderCanvas(card);
+//     async openPreview(card, opts) {
+//       const size = this.computeCanvasSize(opts?.matchElement);
+//       const canvas = await this.renderCanvas(card, size);
 //       const blob = await new Promise(
 //         (resolve) => canvas.toBlob((b) => resolve(b), "image/png", 0.95)
 //       );
@@ -15629,23 +15631,25 @@ export const implementationModule = `
 //       a.remove();
 //       URL.revokeObjectURL(url);
 //     }
-//     async renderCanvas(card) {
+//     async renderCanvas(card, size) {
 //       const canvas = document.createElement("canvas");
-//       canvas.width = this.width;
-//       canvas.height = this.height;
+//       const width = size?.width ?? this.defaultWidth;
+//       const height = size?.height ?? this.defaultHeight;
+//       canvas.width = width;
+//       canvas.height = height;
 //       const ctx = canvas.getContext("2d");
 //       try {
 //         await document.fonts?.ready;
 //       } catch {
 //       }
 //       ctx.fillStyle = "#ffffff";
-//       ctx.fillRect(0, 0, this.width, this.height);
+//       ctx.fillRect(0, 0, width, height);
 //       const headerH = 160;
-//       const grad = ctx.createLinearGradient(0, 0, this.width, 0);
+//       const grad = ctx.createLinearGradient(0, 0, width, 0);
 //       grad.addColorStop(0, "#eff6ff");
 //       grad.addColorStop(1, "#f8fafc");
 //       ctx.fillStyle = grad;
-//       ctx.fillRect(0, 0, this.width, headerH);
+//       ctx.fillRect(0, 0, width, headerH);
 //       let y = this.padding;
 //       const icon = this.getIcon(card.category) || "\u{1F4CB}";
 //       const iconR = 44;
@@ -15660,7 +15664,7 @@ export const implementationModule = `
 //       ctx.fillStyle = "#111827";
 //       ctx.fillText(icon, iconCx, iconCy + 2);
 //       const titleX = iconCx + iconR + 24;
-//       const titleMaxWidth = this.width - titleX - this.padding;
+//       const titleMaxWidth = width - titleX - this.padding;
 //       ctx.textAlign = "left";
 //       ctx.textBaseline = "alphabetic";
 //       ctx.fillStyle = "#0f172a";
@@ -15682,13 +15686,50 @@ export const implementationModule = `
 //         y += 40;
 //       }
 //       const bodyX = this.padding;
-//       const bodyMaxWidth = this.width - this.padding * 2;
+//       const bodyMaxWidth = width - this.padding * 2;
 //       ctx.font = "32px ui-sans-serif, -apple-system, system-ui";
 //       ctx.fillStyle = "#111827";
 //       if (card.description) {
 //         y = this.wrapText(ctx, card.description, bodyX, y + 24, bodyMaxWidth, 44, 3);
 //       } else if (card.overview) {
 //         y = this.wrapText(ctx, card.overview, bodyX, y + 24, bodyMaxWidth, 44, 3);
+//       }
+//       if (card.imageUrl) {
+//         y += 12;
+//         const coverMaxW = width - this.padding * 2;
+//         const coverImg = await this.loadImage(card.imageUrl).catch(() => null);
+//         const radius = 16;
+//         const coverY = y;
+//         if (coverImg) {
+//           const ratio = coverImg.naturalHeight / coverImg.naturalWidth;
+//           let coverW = coverMaxW;
+//           let coverH = Math.round(coverW * ratio);
+//           const maxH = 540;
+//           if (coverH > maxH) {
+//             coverH = maxH;
+//             coverW = Math.round(coverH / ratio);
+//           }
+//           ctx.fillStyle = "#f8fafc";
+//           this.roundRect(ctx, this.padding, coverY, coverW, coverH, radius);
+//           ctx.fill();
+//           ctx.save();
+//           this.roundRect(ctx, this.padding, coverY, coverW, coverH, radius);
+//           ctx.clip();
+//           ctx.drawImage(coverImg, this.padding, coverY, coverW, coverH);
+//           ctx.restore();
+//           y += coverH + 12;
+//         } else {
+//           const placeholderH = 220;
+//           ctx.fillStyle = "#f1f5f9";
+//           this.roundRect(ctx, this.padding, coverY, coverMaxW, placeholderH, radius);
+//           ctx.fill();
+//           ctx.font = "28px ui-sans-serif, -apple-system, system-ui";
+//           ctx.fillStyle = "#94a3b8";
+//           ctx.textAlign = "center";
+//           ctx.textBaseline = "middle";
+//           ctx.fillText("\u5C01\u9762\u56FE", this.padding + coverMaxW / 2, coverY + placeholderH / 2);
+//           y += placeholderH + 12;
+//         }
 //       }
 //       const tips = (card.tips || []).slice(0, 2);
 //       if (tips.length) {
@@ -15705,8 +15746,8 @@ export const implementationModule = `
 //         y += 56;
 //       }
 //       const qrSize = 220;
-//       const qrX = this.width - this.padding - qrSize;
-//       const qrY = this.height - this.padding - qrSize;
+//       const qrX = width - this.padding - qrSize;
+//       const qrY = height - this.padding - qrSize;
 //       await this.drawQrOrPlaceholder(ctx, card, qrX, qrY, qrSize);
 //       ctx.save();
 //       ctx.globalAlpha = 0.85;
@@ -15714,9 +15755,46 @@ export const implementationModule = `
 //       ctx.textBaseline = "alphabetic";
 //       ctx.font = "bold 28px ui-sans-serif, -apple-system, system-ui";
 //       ctx.fillStyle = "#0f172a";
-//       ctx.fillText("aispeeds.me", this.padding, this.height - this.padding / 2);
+//       ctx.fillText("aispeeds.me", this.padding, height - this.padding / 2);
 //       ctx.restore();
 //       return canvas;
+//     }
+//     computeCanvasSize(matchEl) {
+//       try {
+//         if (matchEl) {
+//           const rect = matchEl.getBoundingClientRect();
+//           if (rect.width > 0 && rect.height > 0) {
+//             const aspect = rect.height / rect.width;
+//             const width = this.defaultWidth;
+//             const minH = Math.max(1200, Math.round(width * 0.9));
+//             const height = Math.max(minH, Math.round(width * aspect));
+//             return { width, height };
+//           }
+//         }
+//       } catch {
+//       }
+//       return { width: this.defaultWidth, height: this.defaultHeight };
+//     }
+//     async loadImage(url) {
+//       await new Promise((resolve) => setTimeout(resolve, 0));
+//       return new Promise((resolve, reject) => {
+//         const img = new Image();
+//         img.crossOrigin = "anonymous";
+//         img.onload = () => resolve(img);
+//         img.onerror = () => reject(new Error("image load failed"));
+//         img.src = this.resolveImageUrl(url);
+//       });
+//     }
+//     resolveImageUrl(url) {
+//       try {
+//         const abs = new URL(url, window.location.href);
+//         if (abs.origin !== window.location.origin && abs.protocol === "https:") {
+//           return `/img-proxy?src=${encodeURIComponent(abs.toString())}`;
+//         }
+//         return abs.toString();
+//       } catch {
+//         return url;
+//       }
 //     }
 //     buildDeepLink(card) {
 //       try {
@@ -15933,7 +16011,8 @@ export const implementationModule = `
 //         this._shareService = this._shareService || new ShareService(this.getIcon.bind(this), {
 //           moduleName: this.getModuleName()
 //         });
-//         void this._shareService.openPreview(card);
+//         const cardEl = shareBtn.closest(".overview-card");
+//         void this._shareService.openPreview(card, { matchElement: cardEl || void 0 });
 //         return;
 //       }
 //       const cardId = this.extractCardId(target);

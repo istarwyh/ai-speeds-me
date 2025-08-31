@@ -10,8 +10,9 @@ export type ShareServiceOptions<T extends BaseContentCard = BaseContentCard> = {
 };
 
 export class ShareService<T extends BaseContentCard = BaseContentCard> {
-  private readonly width = 1080;
-  private readonly height = 1440;
+  // Default poster size; actual canvas may be computed per-card
+  private readonly defaultWidth = 1080;
+  private readonly defaultHeight = 1440;
   private readonly padding = 72; // 72px ~ 1in logical at 96dpi
   private readonly getIcon: (category: string) => string;
   private readonly options: ShareServiceOptions<T>;
@@ -54,8 +55,9 @@ export class ShareService<T extends BaseContentCard = BaseContentCard> {
   }
 
   // Open a preview modal to let users confirm and choose action
-  public async openPreview(card: T): Promise<void> {
-    const canvas = await this.renderCanvas(card);
+  public async openPreview(card: T, opts?: { matchElement?: HTMLElement }): Promise<void> {
+    const size = this.computeCanvasSize(opts?.matchElement);
+    const canvas = await this.renderCanvas(card, size);
     const blob = await new Promise<Blob>((resolve) =>
       canvas.toBlob((b) => resolve(b as Blob), 'image/png', 0.95)
     );
@@ -179,10 +181,15 @@ export class ShareService<T extends BaseContentCard = BaseContentCard> {
     URL.revokeObjectURL(url);
   }
 
-  private async renderCanvas(card: T): Promise<HTMLCanvasElement> {
+  private async renderCanvas(
+    card: T,
+    size?: { width: number; height: number }
+  ): Promise<HTMLCanvasElement> {
     const canvas = document.createElement('canvas');
-    canvas.width = this.width;
-    canvas.height = this.height;
+    const width = size?.width ?? this.defaultWidth;
+    const height = size?.height ?? this.defaultHeight;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d')!;
 
     // Ensure fonts loaded for consistent rendering
@@ -190,15 +197,15 @@ export class ShareService<T extends BaseContentCard = BaseContentCard> {
 
     // Background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.fillRect(0, 0, width, height);
 
     // Header bar subtle gradient
     const headerH = 160;
-    const grad = ctx.createLinearGradient(0, 0, this.width, 0);
+    const grad = ctx.createLinearGradient(0, 0, width, 0);
     grad.addColorStop(0, '#eff6ff');
     grad.addColorStop(1, '#f8fafc');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, this.width, headerH);
+    ctx.fillRect(0, 0, width, headerH);
 
     let y = this.padding;
 
@@ -218,7 +225,7 @@ export class ShareService<T extends BaseContentCard = BaseContentCard> {
 
     // Title
     const titleX = iconCx + iconR + 24;
-    const titleMaxWidth = this.width - titleX - this.padding;
+    const titleMaxWidth = width - titleX - this.padding;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#0f172a';
@@ -242,13 +249,55 @@ export class ShareService<T extends BaseContentCard = BaseContentCard> {
 
     // Overview/Description
     const bodyX = this.padding;
-    const bodyMaxWidth = this.width - this.padding * 2;
+    const bodyMaxWidth = width - this.padding * 2;
     ctx.font = '32px ui-sans-serif, -apple-system, system-ui';
     ctx.fillStyle = '#111827';
     if ((card as any).description) {
       y = this.wrapText(ctx, (card as any).description, bodyX, y + 24, bodyMaxWidth, 44, 3);
     } else if ((card as any).overview) {
       y = this.wrapText(ctx, (card as any).overview, bodyX, y + 24, bodyMaxWidth, 44, 3);
+    }
+
+    // Cover Image (if provided)
+    if ((card as any).imageUrl) {
+      y += 12;
+      const coverMaxW = width - this.padding * 2;
+      // Load image with CORS handled; fallback to placeholder on failure
+      const coverImg = await this.loadImage((card as any).imageUrl).catch(() => null);
+      const radius = 16;
+      const coverY = y;
+      if (coverImg) {
+        const ratio = coverImg.naturalHeight / coverImg.naturalWidth;
+        // Keep height reasonable to avoid overwhelming content
+        let coverW = coverMaxW;
+        let coverH = Math.round(coverW * ratio);
+        const maxH = 540; // visual cap similar to UI
+        if (coverH > maxH) {
+          coverH = maxH;
+          coverW = Math.round(coverH / ratio);
+        }
+        ctx.fillStyle = '#f8fafc';
+        this.roundRect(ctx, this.padding, coverY, coverW, coverH, radius);
+        ctx.fill();
+        ctx.save();
+        // clip to rounded rect
+        this.roundRect(ctx, this.padding, coverY, coverW, coverH, radius);
+        ctx.clip();
+        ctx.drawImage(coverImg, this.padding, coverY, coverW, coverH);
+        ctx.restore();
+        y += coverH + 12;
+      } else {
+        const placeholderH = 220;
+        ctx.fillStyle = '#f1f5f9';
+        this.roundRect(ctx, this.padding, coverY, coverMaxW, placeholderH, radius);
+        ctx.fill();
+        ctx.font = '28px ui-sans-serif, -apple-system, system-ui';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('封面图', this.padding + coverMaxW / 2, coverY + placeholderH / 2);
+        y += placeholderH + 12;
+      }
     }
 
     // Tips (up to 2)
@@ -271,8 +320,8 @@ export class ShareService<T extends BaseContentCard = BaseContentCard> {
 
     // QR code area (render live QR if possible; fallback to placeholder)
     const qrSize = 220;
-    const qrX = this.width - this.padding - qrSize;
-    const qrY = this.height - this.padding - qrSize;
+    const qrX = width - this.padding - qrSize;
+    const qrY = height - this.padding - qrSize;
     await this.drawQrOrPlaceholder(ctx, card, qrX, qrY, qrSize);
 
     // Branding watermark
@@ -282,10 +331,53 @@ export class ShareService<T extends BaseContentCard = BaseContentCard> {
     ctx.textBaseline = 'alphabetic';
     ctx.font = 'bold 28px ui-sans-serif, -apple-system, system-ui';
     ctx.fillStyle = '#0f172a';
-    ctx.fillText('aispeeds.me', this.padding, this.height - this.padding / 2);
+    ctx.fillText('aispeeds.me', this.padding, height - this.padding / 2);
     ctx.restore();
 
     return canvas;
+  }
+
+  private computeCanvasSize(matchEl?: HTMLElement): { width: number; height: number } {
+    // If we can read the card element, approximate its aspect ratio to make the
+    // shared image visually consistent with the on-page card.
+    try {
+      if (matchEl) {
+        const rect = matchEl.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const aspect = rect.height / rect.width;
+          const width = this.defaultWidth; // keep high-res width for crispness
+          // Ensure a reasonable minimum height to fit content and QR watermark
+          const minH = Math.max(1200, Math.round(width * 0.9));
+          const height = Math.max(minH, Math.round(width * aspect));
+          return { width, height };
+        }
+      }
+    } catch {}
+    return { width: this.defaultWidth, height: this.defaultHeight };
+  }
+
+  private async loadImage(url: string): Promise<HTMLImageElement> {
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // yield
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('image load failed'));
+      img.src = this.resolveImageUrl(url);
+    });
+  }
+
+  private resolveImageUrl(url: string): string {
+    try {
+      const abs = new URL(url, window.location.href);
+      if (abs.origin !== window.location.origin && abs.protocol === 'https:') {
+        return `/img-proxy?src=${encodeURIComponent(abs.toString())}`;
+      }
+      return abs.toString();
+    } catch {
+      // If URL parsing fails, fall back to original. Upstream load will error and trigger placeholder.
+      return url;
+    }
   }
 
   private buildDeepLink(card: T): string {
