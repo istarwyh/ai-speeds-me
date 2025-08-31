@@ -1,6 +1,6 @@
 # (用户故事) -> 需求 -> 测试场景 -> 测试细节 -> 测试与实现
 
-**通过结构化的 Prompt 模板，将抽象的需求转化为具体的、可验证的测试用例，再基于测试用例生成高质量的代码实现**。这里可以做成多个subAgent ,然后让hostAgent 引导用户去完成整个流程，单纯靠用户拷贝prompt 来实现整个流程有点让人心累。
+**通过结构化的 Prompt 模板，将抽象的需求转化为具体的、可验证的测试用例，再基于测试用例生成高质量的代码实现**。
 
 ## 核心思想
 
@@ -143,22 +143,22 @@ graph TD
 - 对于检查类方法，不仅需要检查true或者false，还要检查 error code（enum） 是对的
 - 测试运行规范： 1. 使用mvn进行完整项目构建（首次运行必需）因为这是个多module的系统，2.运行指定模块的指定测试
 
-写代码时，必须遵守以下规则（代码实现Rule）：
+写代码时，必须遵守以下规则（代码实现规范）：
 
-- 禁止直接使用null值, 使用`Optional<T>`包装可能为空的对象
-- 禁止使用else分支, 使用卫语句提前返回，或者extract method 来避免使用else.
-- 禁止使用传统for循环, 使用Stream API进行集合处理
-- 禁止模糊缩写,use intention revealing name.
-    - for map, use xx2yy, e.g.: Map<Long,Account> userId2Account
-    - for list, use xx(s), e.g.: List<String> configuredSegments
-- 每个方法不超过7行代码, 强制拆分长方法为小方法
-- 避免无意义的注释，尽量用变量名/方法名来解释。
-- 对于那些比较复杂的方法，如果实在无法用变量名/方法名来解释，则使用中文注释
-- parameter尽量避免用 Optional。
-- 参数不合法时，直接抛出 IllegalArgumentException 异常。
-- 对于 xxxId 的参数，应该使用 Long 类型，而不是 int /String 类型，例如 Long userId
-- 对于检查类方法，返回值需要有 error message 和 error code
-- 该用Enum 就要用Enum，比如 rewardType 
+- 禁止直接使用 `null` 值，使用 `Optional<T>` 包装可能为空的对象
+- 禁止使用 `else` 分支，使用卫语句提前返回，或者提取方法（extract method）来避免使用 `else`
+- 禁止使用传统 `for` 循环，使用 `Stream API` 进行集合处理
+- 禁止模糊缩写，使用意图明确的命名
+    - 对于 `Map`，使用 `xx2yy` 格式，例如：`Map<Long, Account> userId2Account`
+    - 对于 `List`，使用 `xx(s)` 格式，例如：`List<String> configuredSegments`
+- 每个方法不超过 7 行代码，强制拆分长方法为小方法
+- 避免无意义的注释，尽量用变量名/方法名来解释
+- 对于复杂方法，若无法用变量名/方法名清晰表达，则使用中文注释
+- 参数应尽量避免使用 `Optional` 类型
+- 参数不合法时，直接抛出 `IllegalArgumentException` 异常
+- 对于 `xxxId` 类型的参数，应使用 `Long` 类型而非 `int` 或 `String` 类型，例如 `Long userId`
+- 对于检查类方法，返回值需要包含错误信息（error message）和错误码（error code）
+- 应使用枚举（`Enum`）的地方就要使用，例如 `rewardType` 
 ```
 
 
@@ -168,6 +168,10 @@ graph TD
 1. **粘贴功能需求**到测试场景 prompt
 2. **将功能需求 + 测试场景**交给测试细节 prompt
 3. **将功能需求 + 测试场景 + 测试细节**交给 Cursor/Qoder/Claude Code/...，产出测试代码 + 功能实现
+
+## 未来展望
+
+**自动化流程优化**：当前流程需要用户手动复制粘贴多个阶段的 Prompt，未来可以考虑通过多个子代理（subAgent）协同工作，由主代理（hostAgent）引导用户完成整个 TDD 流程，提升用户体验。
 
 ## 参考文献
 [Vibe coding with TDD（简单版）](https://mp.weixin.qq.com/s/YoZ7t4nlETfqeP2ApNRBUw) 

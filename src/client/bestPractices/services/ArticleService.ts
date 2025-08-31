@@ -16,7 +16,7 @@ export class ArticleService extends BaseContentService<PracticeCard> {
         'concurrent-claude': async () => (await import('../content/concurrent-claude.md')).default,
         'software-engineering-with-claude': async () => (await import('../content/software-engineering-with-claude.md')).default,
         'intelligent-undo': async () => (await import('../content/intelligent-undo.md')).default,
-        'agent-linus-torvalds': async () => (await import('../content/agent-Linus-Torvalds.md')).default,
+        'agent-linus-torvalds': async () => (await import('../content/agent-linus-torvalds.md')).default,
         'tdd-analyze-requirements': async () => (await import('../content/tdd-analyze-requirements.md')).default
       };
 
